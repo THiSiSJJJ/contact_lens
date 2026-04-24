@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact_Lens</title>
+    <meta
+      name="description"
+      content="Contact_Lens — an online shop for soft silhouettes and everyday lifestyle pieces."
+    />
+    <meta name="google" content="notranslate" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css?v=20260424q" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top wrapper">
+        <a href="#/" class="brand-logo">Contact_Lens</a>
+
+        <form id="global-search-form" class="search-form" role="search">
+          <input id="global-search-input" type="search" placeholder="What are you looking for?" data-i18n="header.search" />
+          <button type="submit">⌕</button>
+        </form>
+
+        <div class="header-actions">
+          <a href="#/favorites" class="header-icon-btn" id="favorite-link" title="Favorites">★ <span id="favorite-count">0</span></a>
+          <a href="#/cart" class="header-icon-btn" id="cart-link" title="Cart">🛒 <span id="cart-count">0</span></a>
+          <button class="lang-toggle" id="lang-toggle">MN</button>
+          <a href="#/register" class="header-link" id="signup-link" data-i18n="header.signUp">Sign Up</a>
+          <a href="#/login" class="header-link" id="account-link" data-i18n="header.login">Login</a>
+          <button id="header-logout-btn" class="header-link header-logout-btn hidden">Logout</button>
+        </div>
+      </div>
+
+      <nav class="main-nav">
+        <div class="wrapper nav-row">
+          <a href="#/shop" data-i18n="nav.allProducts">All Products</a>
+          <a href="#/shop?featured=1" data-i18n="nav.newArrivals">New Arrivals</a>
+          <a href="#/shop?sort=name" data-i18n="nav.brands">Brands</a>
+          <a href="#/shop?category=daily" data-i18n="nav.daily">Daily Lenses</a>
+          <a href="#/shop?category=colored" data-i18n="nav.colored">Colored Lenses</a>
+          <a href="#/contact" data-i18n="nav.contact">Contact</a>
+          <a href="#/admin" id="admin-nav-link" class="hidden" data-i18n="nav.admin">Admin</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="app" class="page-shell wrapper"></main>
+
+    <footer class="site-footer">
+      <div class="wrapper footer-grid">
+        <div>
+          <strong>Contact_Lens</strong>
+          <p data-i18n="footer.tagline">Your trusted contact lens store — daily, monthly, colored, and toric lenses with fast delivery.</p>
+        </div>
+        <div>
+          <strong data-i18n="footer.customer">Customer</strong>
+          <a href="#/profile" data-i18n="footer.myAccount">My Account</a>
+          <a href="#/orders" data-i18n="footer.orderHistory">Order History</a>
+          <a href="#/favorites" data-i18n="footer.favorites">Favorites</a>
+        </div>
+        <div>
+          <strong data-i18n="footer.support">Support</strong>
+          <a href="#/contact" data-i18n="footer.contactUs">Contact Us</a>
+          <a href="#/checkout" data-i18n="footer.shippingAddress">Shipping Address</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/app.js?v=20260424q"></script>
+  </body>
+</html>
