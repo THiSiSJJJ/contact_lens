@@ -34,6 +34,7 @@
           <a href="#/register" class="header-link" id="signup-link" data-i18n="header.signUp">Sign Up</a>
           <a href="#/login" class="header-link" id="account-link" data-i18n="header.login">Login</a>
           <button id="header-logout-btn" class="header-link header-logout-btn hidden">Logout</button>
+          <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu" aria-expanded="false">☰</button>
         </div>
       </div>
 
@@ -48,6 +49,29 @@
           <a href="#/admin" id="admin-nav-link" class="hidden" data-i18n="nav.admin">Admin</a>
         </div>
       </nav>
+      <div id="mobile-menu" class="mobile-menu">
+        <div class="wrapper mobile-menu-inner">
+          <form id="mobile-search-form" class="mobile-search-form" role="search">
+            <input id="mobile-search-input" type="search" placeholder="What are you looking for?" />
+            <button type="submit">⌕</button>
+          </form>
+          <nav class="mobile-nav-links">
+            <a href="#/shop" data-i18n="nav.allProducts">All Products</a>
+            <a href="#/shop?featured=1" data-i18n="nav.newArrivals">New Arrivals</a>
+            <a href="#/shop?sort=name" data-i18n="nav.brands">Brands</a>
+            <a href="#/shop?category=daily" data-i18n="nav.daily">Daily Lenses</a>
+            <a href="#/shop?category=colored" data-i18n="nav.colored">Colored Lenses</a>
+            <a href="#/contact" data-i18n="nav.contact">Contact</a>
+            <a href="#/admin" id="mobile-admin-link" class="hidden" data-i18n="nav.admin">Admin</a>
+          </nav>
+          <div class="mobile-menu-foot">
+            <a href="#/register" id="mobile-signup-link" class="btn btn-primary mobile-auth-btn" data-i18n="header.signUp">Sign Up</a>
+            <a href="#/login" id="mobile-account-link" class="mobile-auth-btn" data-i18n="header.login">Login</a>
+            <button id="mobile-logout-btn" class="mobile-auth-btn mobile-logout-btn hidden">Logout</button>
+            <button id="mobile-lang-toggle" class="lang-toggle mobile-lang-toggle">MN</button>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main id="app" class="page-shell wrapper"></main>

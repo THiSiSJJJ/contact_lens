@@ -627,6 +627,7 @@ function updateHeader() {
   favoriteLink.href = state.me ? "#/favorites" : loginHash("/favorites");
   favoriteCount.textContent = state.favorites.length;
   cartCount.textContent = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  updateMobileMenu();
 }
 
 function getHashRoute() {
@@ -3544,7 +3545,68 @@ searchForm.addEventListener("submit", (event) => {
   location.hash = `#/shop?${query.toString()}`;
 });
 
+/* ── Mobile menu ─────────────────────────────────────── */
+const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+const mobileMenu = document.getElementById("mobile-menu");
+const mobileSearchForm = document.getElementById("mobile-search-form");
+const mobileSearchInput = document.getElementById("mobile-search-input");
+const mobileLangToggle = document.getElementById("mobile-lang-toggle");
+const mobileLogoutBtn = document.getElementById("mobile-logout-btn");
+const mobileAdminLink = document.getElementById("mobile-admin-link");
+const mobileSignupLink = document.getElementById("mobile-signup-link");
+const mobileAccountLink = document.getElementById("mobile-account-link");
+
+function closeMobileMenu() {
+  mobileMenu?.classList.remove("open");
+  mobileMenuBtn?.classList.remove("open");
+  if (mobileMenuBtn) mobileMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+mobileMenuBtn?.addEventListener("click", () => {
+  const isOpen = mobileMenu?.classList.toggle("open");
+  mobileMenuBtn.classList.toggle("open", isOpen);
+  mobileMenuBtn.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) mobileSearchInput?.focus();
+});
+
+mobileMenu?.addEventListener("click", (e) => {
+  if (e.target.closest("a[href]")) closeMobileMenu();
+});
+
+mobileSearchForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const query = new URLSearchParams();
+  if (mobileSearchInput?.value.trim()) {
+    query.set("search", mobileSearchInput.value.trim());
+  }
+  closeMobileMenu();
+  location.hash = `#/shop?${query.toString()}`;
+});
+
+mobileLangToggle?.addEventListener("click", () => {
+  setLang(currentLang === "en" ? "mn" : "en");
+  if (mobileLangToggle) mobileLangToggle.textContent = currentLang === "en" ? "MN" : "EN";
+});
+
+mobileLogoutBtn?.addEventListener("click", async () => {
+  closeMobileMenu();
+  headerLogoutBtn?.click();
+});
+
+function updateMobileMenu() {
+  const loggedIn = Boolean(state.me);
+  if (mobileAdminLink) mobileAdminLink.classList.toggle("hidden", !(state.me && state.me.role === "admin"));
+  if (mobileSignupLink) mobileSignupLink.classList.toggle("hidden", loggedIn);
+  if (mobileLogoutBtn) mobileLogoutBtn.classList.toggle("hidden", !loggedIn);
+  if (mobileAccountLink) {
+    mobileAccountLink.textContent = state.me ? state.me.name : t("header.login");
+    mobileAccountLink.href = state.me ? "#/profile" : "#/login";
+  }
+  if (mobileLangToggle) mobileLangToggle.textContent = currentLang === "en" ? "MN" : "EN";
+}
+
 window.addEventListener("hashchange", () => {
+  closeMobileMenu();
   route().catch((error) => {
     console.error(error);
     app.innerHTML = `<div class="empty-state">Something went wrong while rendering the page.</div>`;
