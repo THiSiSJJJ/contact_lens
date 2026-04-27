@@ -4249,12 +4249,10 @@ async function route() {
   if (progressBar) { progressBar.style.width = "40%"; progressBar.style.opacity = "1"; }
   app.innerHTML = `<div class="page-loading">Loading…</div>`;
 
-  /* highlight active nav link */
+  /* highlight active nav link — exact hash match only */
+  const currentHash = location.hash;
   document.querySelectorAll(".main-nav a").forEach((link) => {
-    const href = link.getAttribute("href") || "";
-    const linkPath = href.replace(/^#/, "").split("?")[0];
-    const active = linkPath === path || (linkPath === "/shop" && path.startsWith("/shop"));
-    link.classList.toggle("nav-active", active);
+    link.classList.toggle("nav-active", link.getAttribute("href") === currentHash);
   });
 
   if (!state.home || !state.categories.length || !state.oauthConfig || !state.paymentConfig) {
