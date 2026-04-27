@@ -798,7 +798,7 @@ async function fetchProducts({
         categories.name AS category_name,
         categories.slug AS category_slug
       FROM products
-      JOIN categories ON categories.id = products.category_id
+      LEFT JOIN categories ON categories.id = products.category_id
       ${conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""}
       ORDER BY ${sortSql}
       ${limitSql}
@@ -818,7 +818,7 @@ async function fetchProductByIdOrSlug(identifier, admin = false) {
         categories.name AS category_name,
         categories.slug AS category_slug
       FROM products
-      JOIN categories ON categories.id = products.category_id
+      LEFT JOIN categories ON categories.id = products.category_id
       WHERE ${isNumeric ? "products.id = ?" : "products.slug = ?"}
       ${admin ? "" : "AND products.is_published = 1"}
     `,
@@ -840,7 +840,7 @@ async function getCart(userId) {
              products.*, categories.name AS category_name, categories.slug AS category_slug
       FROM cart_items
       JOIN products ON products.id = cart_items.product_id
-      JOIN categories ON categories.id = products.category_id
+      LEFT JOIN categories ON categories.id = products.category_id
       WHERE cart_items.user_id = ? AND products.is_published = 1
       ORDER BY cart_items.id DESC
     `,
@@ -2545,8 +2545,18 @@ app.put("/api/admin/categories/:id", requireAdmin, async (request, response, nex
 
 app.delete("/api/admin/categories/:id", requireAdmin, async (request, response, next) => {
   try {
-    await run("UPDATE products SET category_id = NULL WHERE category_id = ?", [request.params.id]);
-    await run("DELETE FROM categories WHERE id = ?", [request.params.id]);
+    const id = Number(request.params.id);
+    const fallback = await get("SELECT id FROM categories WHERE id != ? ORDER BY sort_order ASC, id ASC LIMIT 1", [id]);
+    if (fallback) {
+      await run("UPDATE products SET category_id = ? WHERE category_id = ?", [fallback.id, id]);
+    } else {
+      const inserted = await run(
+        "INSERT INTO categories (name, name_mn, slug, sort_order, description) VALUES (?, ?, ?, ?, ?)",
+        ["Uncategorized", null, "uncategorized", 999, ""],
+      );
+      await run("UPDATE products SET category_id = ? WHERE category_id = ?", [inserted.lastID, id]);
+    }
+    await run("DELETE FROM categories WHERE id = ?", [id]);
     response.json({ message: "Category deleted." });
   } catch (error) {
     next(error);
