@@ -2551,17 +2551,16 @@ app.delete("/api/admin/categories/:id", requireAdmin, async (request, response, 
       response.json({ message: "Category already deleted." });
       return;
     }
-    const fallback = await get("SELECT id FROM categories WHERE id != ? ORDER BY id ASC LIMIT 1", [id]);
-    if (fallback) {
-      await run("UPDATE products SET category_id = ? WHERE category_id = ?", [fallback.id, id]);
-    } else {
-      const inserted = await run(
-        "INSERT INTO categories (name, name_mn, slug, sort_order, description) VALUES (?, ?, ?, ?, ?)",
-        ["Uncategorized", "", "uncategorized-" + Date.now(), 999, ""],
-      );
-      await run("UPDATE products SET category_id = ? WHERE category_id = ?", [inserted.lastID, id]);
+    await run("PRAGMA foreign_keys = OFF");
+    try {
+      const fallback = await get("SELECT id FROM categories WHERE id != ? ORDER BY id ASC LIMIT 1", [id]);
+      if (fallback) {
+        await run("UPDATE products SET category_id = ? WHERE category_id = ?", [fallback.id, id]);
+      }
+      await run("DELETE FROM categories WHERE id = ?", [id]);
+    } finally {
+      await run("PRAGMA foreign_keys = ON");
     }
-    await run("DELETE FROM categories WHERE id = ?", [id]);
     response.json({ message: "Category deleted." });
   } catch (error) {
     console.error("Category delete error:", error.message, error.code);
