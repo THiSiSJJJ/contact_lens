@@ -401,6 +401,17 @@ function showToast(message, type = "info") {
   }, 2200);
 }
 
+function finishPageLoad() {
+  const progressBar = document.getElementById("progress-bar");
+  if (progressBar) {
+    progressBar.style.width = "100%";
+    setTimeout(() => { progressBar.style.opacity = "0"; progressBar.style.width = "0%"; }, 300);
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { app.classList.add("page-ready"); });
+  });
+}
+
 function skeletonGrid(count = 8) {
   return `<section class="product-grid">${Array.from({ length: count }, () => `
     <div class="product-card skeleton-card">
@@ -783,6 +794,7 @@ function renderHome() {
   `;
 
   bindCardActions(app);
+  finishPageLoad();
 }
 
 async function renderShop(params) {
@@ -861,13 +873,28 @@ async function renderShop(params) {
   });
 
   bindCardActions(app);
+  finishPageLoad();
 }
 
 async function renderProduct(path) {
   const slug = path.split("/")[2];
   const response = await fetch(`/api/products/${slug}`);
   if (!response.ok) {
-    app.innerHTML = `<div class="empty-state">Product not found.</div>`;
+    app.innerHTML = `
+      <div class="not-found-page">
+        <div class="not-found-lens">
+          <svg viewBox="0 0 120 120" width="96" height="96" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(15,170,181,0.18)" stroke-width="6"/>
+            <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(15,170,181,0.28)" stroke-width="4"/>
+            <circle cx="60" cy="60" r="14" fill="rgba(15,170,181,0.12)"/>
+          </svg>
+        </div>
+        <h2 class="not-found-title">Product not found</h2>
+        <p class="not-found-sub">This product may have been removed or the link is incorrect.</p>
+        <div class="not-found-links">
+          <a href="#/shop" class="button">Browse shop</a>
+        </div>
+      </div>`;
     return;
   }
   const product = await response.json();
@@ -884,19 +911,40 @@ async function renderProduct(path) {
   const isFavorited = state.favorites.some((fav) => fav.id === product.id);
   const displayPrice = formatJPY(hasSale ? product.discountPrice : product.price);
 
+  const breadcrumb = `
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="#/">Home</a>
+      <span>›</span>
+      <a href="#/shop">Shop</a>
+      ${product.category ? `<span>›</span><a href="#/shop?category=${encodeURIComponent(product.categorySlug || product.category)}">${escapeHtml(product.category)}</a>` : ""}
+      <span>›</span>
+      <span aria-current="page">${escapeHtml(productName(product))}</span>
+    </nav>`;
+
+  const galleryHtml = product.images.length
+    ? `<div class="detail-main-img-wrap" id="detail-main-wrap">
+         <img id="detail-main-img" class="detail-main-img" src="${product.images[0].imageUrl}" alt="${escapeHtml(product.images[0].altText || product.name)}" loading="eager" />
+         ${product.images.length > 1 ? `<button class="lightbox-trigger" id="lightbox-trigger" aria-label="Zoom image">⤢</button>` : ""}
+       </div>
+       ${product.images.length > 1 ? `
+       <div class="detail-thumbs" id="detail-thumbs">
+         ${product.images.map((img, i) => `
+           <button class="detail-thumb${i === 0 ? " active" : ""}" data-thumb-src="${escapeHtml(img.imageUrl)}" data-thumb-alt="${escapeHtml(img.altText || product.name)}" data-thumb-i="${i}" type="button">
+             <img src="${img.imageUrl}" alt="${escapeHtml(img.altText || product.name)}" loading="lazy" />
+           </button>`).join("")}
+       </div>` : ""}`
+    : `<div class="detail-fig-empty">No image</div>`;
+
   app.innerHTML = `
-    <a href="#/shop" class="back-link">← Back to shop</a>
+    ${breadcrumb}
     <section class="detail-layout">
-      <div class="detail-gallery">
-        ${product.images.length
-          ? product.images.map((img) => `<figure class="detail-fig"><img src="${img.imageUrl}" alt="${escapeHtml(img.altText || product.name)}" loading="lazy" /></figure>`).join("")
-          : `<div class="detail-fig detail-fig-empty">No image</div>`}
-      </div>
+      <div class="detail-gallery-new">${galleryHtml}</div>
 
       <div class="detail-copy">
         <div class="detail-brand-row">
           <span class="detail-brand">${escapeHtml(product.brand)}</span>
           ${hasSale ? `<span class="detail-sale-tag">SALE</span>` : ""}
+          ${isNewProduct(product) ? `<span class="detail-sale-tag" style="background:var(--teal)">NEW</span>` : ""}
         </div>
         <h1 class="detail-title">${escapeHtml(productName(product))}</h1>
 
@@ -911,9 +959,9 @@ async function renderProduct(path) {
         <p class="detail-desc">${escapeHtml(product.description)}</p>
 
         <dl class="detail-meta">
-          <div class="detail-meta-row"><dt>Category</dt><dd>${escapeHtml(product.category)}</dd></div>
-          ${product.colors.length ? `<div class="detail-meta-row"><dt>Colors</dt><dd>${product.colors.map(c=>`<span class="detail-tag">${escapeHtml(c)}</span>`).join("")}</dd></div>` : ""}
-          ${product.sizes.length  ? `<div class="detail-meta-row"><dt>Sizes</dt><dd>${product.sizes.map(s=>`<span class="detail-tag">${escapeHtml(s)}</span>`).join("")}</dd></div>` : ""}
+          <div class="detail-meta-row"><dt>Category</dt><dd><a href="#/shop?category=${encodeURIComponent(product.categorySlug || product.category)}" class="detail-cat-link">${escapeHtml(product.category)}</a></dd></div>
+          ${product.colors.length ? `<div class="detail-meta-row"><dt>Colors</dt><dd class="detail-chips">${product.colors.map(c=>`<span class="detail-chip">${escapeHtml(c)}</span>`).join("")}</dd></div>` : ""}
+          ${product.sizes.length  ? `<div class="detail-meta-row"><dt>Sizes</dt><dd class="detail-chips">${product.sizes.map(s=>`<span class="detail-chip">${escapeHtml(s)}</span>`).join("")}</dd></div>` : ""}
         </dl>
 
         <div class="detail-actions" id="detail-actions-anchor">
@@ -946,6 +994,35 @@ async function renderProduct(path) {
   `;
   bindCardActions(app);
 
+  /* thumbnail strip */
+  const mainImg = document.getElementById("detail-main-img");
+  document.querySelectorAll(".detail-thumb").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".detail-thumb").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (mainImg) {
+        mainImg.src = btn.dataset.thumbSrc;
+        mainImg.alt = btn.dataset.thumbAlt;
+      }
+    });
+  });
+
+  /* lightbox */
+  const lightboxTrigger = document.getElementById("lightbox-trigger");
+  if (lightboxTrigger && mainImg) {
+    lightboxTrigger.addEventListener("click", () => {
+      const lb = document.createElement("div");
+      lb.className = "lightbox";
+      lb.innerHTML = `<div class="lightbox-backdrop"></div><div class="lightbox-inner"><img src="${mainImg.src}" alt="${escapeHtml(mainImg.alt)}" /><button class="lightbox-close" aria-label="Close">✕</button></div>`;
+      document.body.appendChild(lb);
+      requestAnimationFrame(() => lb.classList.add("open"));
+      const close = () => { lb.classList.remove("open"); setTimeout(() => lb.remove(), 250); };
+      lb.querySelector(".lightbox-close").addEventListener("click", close);
+      lb.querySelector(".lightbox-backdrop").addEventListener("click", close);
+      document.addEventListener("keydown", function esc(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", esc); } });
+    });
+  }
+
   const qtyEl = document.getElementById("detail-qty");
   const addBtn = app.querySelector(".detail-add-btn");
   if (qtyEl && addBtn) {
@@ -972,6 +1049,8 @@ async function renderProduct(path) {
       { threshold: 0 },
     ).observe(anchor);
   }
+
+  finishPageLoad();
 
   fetch(`/api/products/${product.slug}/related`)
     .then((r) => r.json())
@@ -1119,6 +1198,7 @@ function renderCart() {
       renderCart();
     });
   });
+  finishPageLoad();
 }
 
 async function renderCheckout(params = new URLSearchParams()) {
@@ -1974,6 +2054,7 @@ function renderFavorites() {
     </section>
   `;
   bindCardActions(app);
+  finishPageLoad();
 }
 
 function renderContact() {
@@ -2077,6 +2158,7 @@ function renderContact() {
       submitBtn.textContent = t("contact.submitBtn");
     }
   });
+  finishPageLoad();
 }
 
 async function uploadFiles(files, onProgress) {
@@ -4084,6 +4166,9 @@ async function route() {
   }
 
   window.scrollTo({ top: 0, behavior: "instant" });
+  app.classList.remove("page-ready");
+  const progressBar = document.getElementById("progress-bar");
+  if (progressBar) { progressBar.style.width = "40%"; progressBar.style.opacity = "1"; }
   app.innerHTML = `<div class="page-loading">Loading…</div>`;
 
   if (!state.home || !state.categories.length || !state.oauthConfig || !state.paymentConfig) {
@@ -4156,7 +4241,23 @@ async function route() {
     return;
   }
 
-  app.innerHTML = `<div class="empty-state">Page not found.</div>`;
+  app.innerHTML = `
+    <div class="not-found-page">
+      <div class="not-found-lens">
+        <svg viewBox="0 0 120 120" width="96" height="96" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(15,170,181,0.18)" stroke-width="6"/>
+          <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(15,170,181,0.28)" stroke-width="4"/>
+          <circle cx="60" cy="60" r="14" fill="rgba(15,170,181,0.12)"/>
+          <text x="60" y="67" text-anchor="middle" font-size="18" font-weight="700" fill="rgba(15,170,181,0.6)">404</text>
+        </svg>
+      </div>
+      <h2 class="not-found-title">Page not found</h2>
+      <p class="not-found-sub">This page doesn't exist or has been moved.</p>
+      <div class="not-found-links">
+        <a href="#/" class="button">Go home</a>
+        <a href="#/shop" class="button-secondary">Browse shop</a>
+      </div>
+    </div>`;
 }
 
 searchForm.addEventListener("submit", (event) => {
