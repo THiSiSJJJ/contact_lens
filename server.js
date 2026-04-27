@@ -4,13 +4,14 @@ const path = require("path");
 const dotenv = require("dotenv");
 const express = require("express");
 const multer = require("multer");
+const nodemailer = require("nodemailer");
 const passport = require("passport");
 const Stripe = require("stripe");
 const FacebookStrategy = require("passport-facebook").Strategy;
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const { all, get, hashPassword, initializeDatabase, nowPlusDays, run } = require("./db");
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,16 @@ const publicDir = path.join(__dirname, "public");
 const uploadsDir = path.join(publicDir, "uploads");
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || `http://localhost:${PORT}`;
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+const mailer =
+  process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+    ? nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: Number(process.env.SMTP_PORT) === 465,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      })
+    : null;
 
 const PAYMENT_METHOD_CONFIG = {
   bank_transfer: { label: "Bank Transfer", provider: "stripe", type: "async" },
@@ -215,6 +226,402 @@ function formatCurrencyValue(value) {
   return Number(value || 0);
 }
 
+function escapeHtmlEmail(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function jpy(v) {
+  return `¥${Number(v || 0).toLocaleString("ja-JP")}`;
+}
+
+async function sendOrderConfirmationEmail(orderId) {
+  if (!mailer) return;
+  try {
+    const order = await get("SELECT * FROM orders WHERE id = ?", [orderId]);
+    if (!order) return;
+    const user = await get("SELECT id, name, email FROM users WHERE id = ?", [order.user_id]);
+    if (!user?.email) return;
+    const items = await all(
+      `SELECT oi.product_name, oi.brand, oi.unit_price, oi.quantity
+       FROM order_items oi WHERE oi.order_id = ?`,
+      [orderId],
+    );
+    const addr = await get("SELECT * FROM addresses WHERE id = ?", [order.address_id]);
+    const paymentLabel = PAYMENT_METHOD_CONFIG[order.payment_method]?.label || order.payment_method || "—";
+    const isPaid = order.payment_status === "paid";
+
+    const itemRows = items.map((it) => `
+      <tr>
+        <td style="padding:10px 14px;border-bottom:1px solid #e8eef4;font-size:0.9rem;">
+          ${escapeHtmlEmail(it.product_name || "Product")}
+          ${it.brand ? `<br><span style="font-size:0.78rem;color:#5b6e87;">${escapeHtmlEmail(it.brand)}</span>` : ""}
+        </td>
+        <td style="padding:10px 14px;border-bottom:1px solid #e8eef4;text-align:center;font-size:0.9rem;">${it.quantity}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #e8eef4;text-align:right;font-size:0.9rem;">${jpy(it.unit_price)}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #e8eef4;text-align:right;font-size:0.9rem;font-weight:700;">${jpy(it.unit_price * it.quantity)}</td>
+      </tr>`).join("");
+
+    const addrText = addr
+      ? [addr.full_name, addr.address_line1, addr.address_line2, `${addr.city} ${addr.postal_code || ""}`.trim(), addr.prefecture, addr.phone]
+          .filter(Boolean).map(escapeHtmlEmail).join("<br>")
+      : "—";
+
+    const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f8fc;font-family:Arial,sans-serif;color:#18253a;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #cfd9e8;border-radius:8px;overflow:hidden;">
+
+  <!-- header -->
+  <tr><td style="background:linear-gradient(135deg,#063a50 0%,#0c7d8a 55%,#1ab8c8 100%);padding:28px 32px;">
+    <div style="font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-0.02em;">Contact_Lens</div>
+    <div style="font-size:0.95rem;color:rgba(255,255,255,0.82);margin-top:4px;">Order Confirmation</div>
+  </td></tr>
+
+  <!-- greeting -->
+  <tr><td style="padding:28px 32px 0;">
+    <p style="margin:0 0 10px;font-size:1rem;">Hi ${escapeHtmlEmail(user.name)},</p>
+    <p style="margin:0 0 24px;font-size:0.92rem;color:#5b6e87;line-height:1.75;">
+      ${isPaid
+        ? "Thank you for your order! Your payment has been confirmed and we're preparing your lenses."
+        : "Thank you for your order! We've received it and will begin processing once payment clears."}
+    </p>
+
+    <!-- order number badge -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8fc;border:1px solid #cfd9e8;border-radius:6px;margin-bottom:24px;">
+      <tr><td style="padding:14px 20px;">
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;">Order Number</div>
+        <div style="font-family:monospace;font-size:1.1rem;font-weight:700;margin-top:4px;">${escapeHtmlEmail(order.order_number)}</div>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- items table -->
+  <tr><td style="padding:0 32px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #cfd9e8;border-radius:6px;overflow:hidden;margin-bottom:20px;">
+      <tr style="background:#f4f8fc;">
+        <th style="padding:9px 14px;text-align:left;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Product</th>
+        <th style="padding:9px 14px;text-align:center;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Qty</th>
+        <th style="padding:9px 14px;text-align:right;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Unit</th>
+        <th style="padding:9px 14px;text-align:right;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Total</th>
+      </tr>
+      ${itemRows}
+    </table>
+  </td></tr>
+
+  <!-- totals -->
+  <tr><td style="padding:0 32px 24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8fc;border:1px solid #cfd9e8;border-radius:6px;">
+      <tr><td style="padding:10px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:0.9rem;color:#5b6e87;padding:3px 0;">Subtotal</td>
+            <td style="font-size:0.9rem;text-align:right;padding:3px 0;">${jpy(order.subtotal)}</td>
+          </tr>
+          ${Number(order.shipping_total) > 0 ? `<tr>
+            <td style="font-size:0.9rem;color:#5b6e87;padding:3px 0;">Shipping</td>
+            <td style="font-size:0.9rem;text-align:right;padding:3px 0;">${jpy(order.shipping_total)}</td>
+          </tr>` : ""}
+          <tr>
+            <td style="padding-top:10px;border-top:1px solid #cfd9e8;font-weight:700;font-size:1rem;">Total</td>
+            <td style="padding-top:10px;border-top:1px solid #cfd9e8;font-weight:700;font-size:1rem;text-align:right;color:#0faab5;">${jpy(order.grand_total)}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- shipping + payment -->
+  <tr><td style="padding:0 32px 28px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="50%" valign="top" style="padding-right:12px;">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;margin-bottom:8px;">Ship To</div>
+          <div style="font-size:0.88rem;line-height:1.7;">${addrText}</div>
+        </td>
+        <td width="50%" valign="top" style="padding-left:12px;">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;margin-bottom:8px;">Payment</div>
+          <div style="font-size:0.88rem;">${escapeHtmlEmail(paymentLabel)}</div>
+          <div style="font-size:0.82rem;color:#5b6e87;margin-top:4px;">${isPaid ? "✓ Paid" : "Awaiting payment"}</div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- CTA -->
+  <tr><td style="padding:0 32px 32px;text-align:center;">
+    <a href="${FRONTEND_BASE_URL}/#/orders" style="display:inline-block;padding:13px 36px;background:#0faab5;color:#fff;text-decoration:none;font-weight:700;font-size:0.95rem;border-radius:6px;">View My Orders</a>
+  </td></tr>
+
+  <!-- footer -->
+  <tr><td style="padding:18px 32px;border-top:1px solid #cfd9e8;background:#f4f8fc;text-align:center;">
+    <p style="margin:0;font-size:0.8rem;color:#5b6e87;">Questions? <a href="${FRONTEND_BASE_URL}/#/contact" style="color:#0faab5;">Contact our support team</a></p>
+    <p style="margin:6px 0 0;font-size:0.72rem;color:#a8bace;">© Contact_Lens</p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: user.email,
+      subject: `Order confirmed: ${order.order_number}`,
+      html,
+      text: `Hi ${user.name},\n\nYour order ${order.order_number} has been received.\nTotal: ${jpy(order.grand_total)}\nPayment: ${paymentLabel}\n\nView your order: ${FRONTEND_BASE_URL}/#/orders\n\n— Contact_Lens`,
+    });
+    console.log(`[order-email] Sent confirmation for ${order.order_number} → ${user.email}`);
+  } catch (err) {
+    console.error(`[order-email] Failed for order ${orderId}:`, err.message);
+  }
+}
+
+async function sendLowStockAlert(products) {
+  if (!mailer) return;
+  try {
+    const adminUser = await get("SELECT email FROM users WHERE role = 'admin' LIMIT 1");
+    const to = adminUser?.email || process.env.SMTP_USER;
+    if (!to) return;
+
+    const rows = products.map((p) => {
+      const isOut = p.stock_quantity === 0;
+      const color = isOut ? "#dc2626" : "#d97706";
+      const label = isOut ? "OUT OF STOCK" : `${p.stock_quantity} left`;
+      return `<tr>
+        <td style="padding:9px 14px;border-bottom:1px solid #e8eef4;font-size:0.9rem;">
+          <a href="${FRONTEND_BASE_URL}/#/product/${escapeHtmlEmail(p.slug)}" style="color:#0faab5;text-decoration:none;">${escapeHtmlEmail(p.name)}</a>
+        </td>
+        <td style="padding:9px 14px;border-bottom:1px solid #e8eef4;font-weight:700;color:${color};font-size:0.9rem;">${label}</td>
+      </tr>`;
+    }).join("");
+
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject: `⚠ Low stock alert — ${products.length} product${products.length !== 1 ? "s" : ""} need attention`,
+      html: `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#18253a;background:#f4f8fc;margin:0;padding:24px;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #cfd9e8;border-radius:8px;overflow:hidden;">
+  <div style="background:linear-gradient(135deg,#063a50,#0c7d8a);padding:20px 28px;color:#fff;">
+    <div style="font-size:1.1rem;font-weight:800;">Contact_Lens — Stock Alert</div>
+  </div>
+  <div style="padding:24px 28px;">
+    <p style="margin:0 0 16px;font-size:0.95rem;">The following products are running low or out of stock:</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #cfd9e8;border-radius:6px;overflow:hidden;">
+      <tr style="background:#f4f8fc;">
+        <th style="padding:9px 14px;text-align:left;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Product</th>
+        <th style="padding:9px 14px;text-align:left;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#5b6e87;border-bottom:1px solid #cfd9e8;">Stock</th>
+      </tr>
+      ${rows}
+    </table>
+    <p style="margin:20px 0 0;text-align:center;">
+      <a href="${FRONTEND_BASE_URL}/#/admin?tab=products" style="display:inline-block;padding:11px 28px;background:#0faab5;color:#fff;text-decoration:none;font-weight:700;border-radius:6px;font-size:0.9rem;">Manage Inventory</a>
+    </p>
+  </div>
+</div>
+</body></html>`,
+      text: `Low stock alert:\n\n${products.map((p) => `${p.name}: ${p.stock_quantity === 0 ? "OUT OF STOCK" : p.stock_quantity + " left"}`).join("\n")}\n\nManage inventory: ${FRONTEND_BASE_URL}/#/admin?tab=products`,
+    });
+    console.log(`[low-stock] Alert sent for ${products.length} product(s) → ${to}`);
+  } catch (err) {
+    console.error("[low-stock] Failed to send alert:", err.message);
+  }
+}
+
+async function sendOrderShippedEmail(orderId, trackingNumber) {
+  if (!mailer) return;
+  try {
+    const order = await get("SELECT * FROM orders WHERE id = ?", [orderId]);
+    if (!order) return;
+    const user = await get("SELECT id, name, email FROM users WHERE id = ?", [order.user_id]);
+    if (!user?.email) return;
+    const addr = await get("SELECT * FROM addresses WHERE id = ?", [order.address_id]);
+
+    const addrText = addr
+      ? [addr.full_name, addr.address_line1, addr.address_line2, `${addr.city} ${addr.postal_code || ""}`.trim(), addr.prefecture]
+          .filter(Boolean).map(escapeHtmlEmail).join("<br>")
+      : "—";
+
+    const trackingHtml = trackingNumber
+      ? `<tr><td style="padding:14px 20px;">
+          <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;">Tracking Number</div>
+          <div style="font-family:monospace;font-size:1.05rem;font-weight:700;margin-top:4px;">${escapeHtmlEmail(trackingNumber)}</div>
+        </td></tr>`
+      : "";
+
+    const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f8fc;font-family:Arial,sans-serif;color:#18253a;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #cfd9e8;border-radius:8px;overflow:hidden;">
+
+  <!-- header -->
+  <tr><td style="background:linear-gradient(135deg,#063a50 0%,#0c7d8a 55%,#1ab8c8 100%);padding:28px 32px;">
+    <div style="font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-0.02em;">Contact_Lens</div>
+    <div style="font-size:0.95rem;color:rgba(255,255,255,0.82);margin-top:4px;">Your Order Has Shipped! 📦</div>
+  </td></tr>
+
+  <!-- greeting -->
+  <tr><td style="padding:28px 32px 0;">
+    <p style="margin:0 0 10px;font-size:1rem;">Hi ${escapeHtmlEmail(user.name)},</p>
+    <p style="margin:0 0 24px;font-size:0.92rem;color:#5b6e87;line-height:1.75;">
+      Great news — your order is on its way! You can expect delivery within the timeframe shared at checkout.
+    </p>
+
+    <!-- order number badge -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8fc;border:1px solid #cfd9e8;border-radius:6px;margin-bottom:16px;">
+      <tr><td style="padding:14px 20px;">
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;">Order Number</div>
+        <div style="font-family:monospace;font-size:1.1rem;font-weight:700;margin-top:4px;">${escapeHtmlEmail(order.order_number)}</div>
+      </td></tr>
+      ${trackingHtml}
+    </table>
+  </td></tr>
+
+  <!-- ship to -->
+  <tr><td style="padding:0 32px 28px;">
+    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;margin-bottom:8px;">Delivering To</div>
+    <div style="font-size:0.88rem;line-height:1.7;">${addrText}</div>
+  </td></tr>
+
+  <!-- CTA -->
+  <tr><td style="padding:0 32px 32px;text-align:center;">
+    <a href="${FRONTEND_BASE_URL}/#/orders" style="display:inline-block;padding:13px 36px;background:#0faab5;color:#fff;text-decoration:none;font-weight:700;font-size:0.95rem;border-radius:6px;">View Order Details</a>
+  </td></tr>
+
+  <!-- footer -->
+  <tr><td style="padding:18px 32px;border-top:1px solid #cfd9e8;background:#f4f8fc;text-align:center;">
+    <p style="margin:0;font-size:0.8rem;color:#5b6e87;">Questions? <a href="${FRONTEND_BASE_URL}/#/contact" style="color:#0faab5;">Contact our support team</a></p>
+    <p style="margin:6px 0 0;font-size:0.72rem;color:#a8bace;">© Contact_Lens</p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: user.email,
+      subject: `Your order ${order.order_number} has shipped!`,
+      html,
+      text: `Hi ${user.name},\n\nYour order ${order.order_number} is on its way!${trackingNumber ? `\nTracking: ${trackingNumber}` : ""}\n\nView your order: ${FRONTEND_BASE_URL}/#/orders\n\n— Contact_Lens`,
+    });
+    console.log(`[shipped-email] Sent for ${order.order_number} → ${user.email}`);
+  } catch (err) {
+    console.error(`[shipped-email] Failed for order ${orderId}:`, err.message);
+  }
+}
+
+function generateReceiptHtml({ order, user, items, address, brandName }) {
+  const date = new Date(order.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const paymentLabel = PAYMENT_METHOD_CONFIG[order.payment_method]?.label || order.payment_method || "—";
+  const addrLines = address
+    ? [address.full_name, address.address_line1, address.address_line2, `${address.city} ${address.postal_code || ""}`.trim(), address.prefecture, address.phone].filter(Boolean)
+    : ["—"];
+
+  const itemRows = items.map((it) => `
+    <tr>
+      <td style="padding:9px 12px;border-bottom:1px solid #e8eef4;">${escapeHtmlEmail(it.product_name || "Product")}${it.brand ? `<br><small style="color:#6b7280;">${escapeHtmlEmail(it.brand)}</small>` : ""}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid #e8eef4;text-align:center;">${it.quantity}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid #e8eef4;text-align:right;">${jpy(it.unit_price)}</td>
+      <td style="padding:9px 12px;border-bottom:1px solid #e8eef4;text-align:right;font-weight:600;">${jpy(it.unit_price * it.quantity)}</td>
+    </tr>`).join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Receipt ${escapeHtmlEmail(order.order_number)} — ${escapeHtmlEmail(brandName)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #18253a; background: #f4f8fc; margin: 0; padding: 24px 16px; }
+    .receipt { max-width: 680px; margin: 0 auto; background: #fff; border: 1px solid #cfd9e8; border-radius: 8px; overflow: hidden; }
+    .receipt-header { background: linear-gradient(135deg, #063a50, #0c7d8a); color: #fff; padding: 24px 32px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .receipt-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; }
+    .receipt-title { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+    .receipt-date { font-size: 0.85rem; opacity: 0.75; text-align: right; }
+    .receipt-body { padding: 28px 32px; }
+    .order-num { background: #f4f8fc; border: 1px solid #cfd9e8; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px; }
+    .order-num-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; }
+    .order-num-val { font-family: monospace; font-size: 1.05rem; font-weight: 700; margin-top: 3px; }
+    table { width: 100%; border-collapse: collapse; border: 1px solid #cfd9e8; border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+    th { background: #f4f8fc; padding: 9px 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; border-bottom: 1px solid #cfd9e8; text-align: left; }
+    .totals { background: #f4f8fc; border: 1px solid #cfd9e8; border-radius: 6px; padding: 14px 16px; margin-bottom: 24px; }
+    .totals-row { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 3px 0; }
+    .totals-grand { font-weight: 700; font-size: 1rem; border-top: 1px solid #cfd9e8; padding-top: 10px; margin-top: 6px; }
+    .totals-grand span:last-child { color: #0faab5; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    .info-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 6px; }
+    .info-val { font-size: 0.88rem; line-height: 1.7; }
+    .print-btn { display: inline-block; padding: 11px 28px; background: #0faab5; color: #fff; font-weight: 700; font-size: 0.9rem; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; }
+    .print-btn:hover { background: #0c96a0; }
+    .receipt-footer { padding: 16px 32px; border-top: 1px solid #cfd9e8; background: #f4f8fc; text-align: center; font-size: 0.8rem; color: #6b7280; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .receipt { border: none; border-radius: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="receipt-header">
+      <div>
+        <div class="receipt-brand">${escapeHtmlEmail(brandName)}</div>
+        <div class="receipt-title">Order Receipt</div>
+      </div>
+      <div class="receipt-date">${date}</div>
+    </div>
+    <div class="receipt-body">
+      <div class="order-num">
+        <div class="order-num-label">Order Number</div>
+        <div class="order-num-val">${escapeHtmlEmail(order.order_number)}</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><span>${jpy(order.subtotal)}</span></div>
+        ${Number(order.shipping_total) > 0 ? `<div class="totals-row"><span>Shipping</span><span>${jpy(order.shipping_total)}</span></div>` : ""}
+        <div class="totals-row totals-grand"><span>Total</span><span>${jpy(order.grand_total)}</span></div>
+      </div>
+
+      <div class="info-grid">
+        <div>
+          <div class="info-label">Ship To</div>
+          <div class="info-val">${addrLines.map(escapeHtmlEmail).join("<br>")}</div>
+        </div>
+        <div>
+          <div class="info-label">Payment</div>
+          <div class="info-val">
+            ${escapeHtmlEmail(paymentLabel)}<br>
+            <span style="font-size:0.82rem;color:#6b7280;">${order.payment_status === "paid" ? "✓ Paid" : "Awaiting payment"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-print" style="text-align:center;">
+        <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+      </div>
+    </div>
+    <div class="receipt-footer">
+      ${escapeHtmlEmail(brandName)} · Thank you for your order!
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 async function createSession(userId) {
   const token = createToken();
   const expiresAt = nowPlusDays(30);
@@ -375,9 +782,9 @@ async function fetchProducts({
 
   const sortSql =
     sort === "price-asc"
-      ? "products.price ASC"
+      ? "COALESCE(products.discount_price, products.price) ASC"
       : sort === "price-desc"
-        ? "products.price DESC"
+        ? "COALESCE(products.discount_price, products.price) DESC"
         : sort === "name"
           ? "products.name ASC"
           : "products.created_at DESC";
@@ -427,30 +834,36 @@ async function fetchProductByIdOrSlug(identifier, admin = false) {
 }
 
 async function getCart(userId) {
-  const items = await all(
+  const rows = await all(
     `
-      SELECT cart_items.id, cart_items.quantity, products.id AS product_id
+      SELECT cart_items.id AS cart_item_id, cart_items.quantity,
+             products.*, categories.name AS category_name, categories.slug AS category_slug
       FROM cart_items
       JOIN products ON products.id = cart_items.product_id
-      WHERE cart_items.user_id = ?
+      JOIN categories ON categories.id = products.category_id
+      WHERE cart_items.user_id = ? AND products.is_published = 1
       ORDER BY cart_items.id DESC
     `,
     [userId],
   );
 
-  const products = [];
-  for (const item of items) {
-    const product = await fetchProductByIdOrSlug(item.product_id, true);
-    if (product && product.isPublished) {
-      products.push({
-        id: item.id,
-        product,
-        quantity: item.quantity,
-      });
-    }
+  if (!rows.length) {
+    return [];
   }
 
-  return products;
+  const normalized = rows.map((row) => ({
+    cartItemId: row.cart_item_id,
+    quantity: row.quantity,
+    product: normalizeProduct(row),
+  }));
+
+  const productsWithImages = await attachImages(normalized.map((n) => n.product));
+
+  return normalized.map((n, i) => ({
+    id: n.cartItemId,
+    product: productsWithImages[i],
+    quantity: n.quantity,
+  }));
 }
 
 function stripeEnabled() {
@@ -619,7 +1032,9 @@ async function fulfillOrder(orderId, updates = {}) {
     throw new Error("Order not found.");
   }
 
-  if (!order.stock_reduced_at) {
+  const isFirstFulfillment = !order.stock_reduced_at;
+
+  if (isFirstFulfillment) {
     const items = await all("SELECT product_id, quantity FROM order_items WHERE order_id = ?", [orderId]);
     for (const item of items) {
       const product = await get("SELECT id, name, stock_quantity FROM products WHERE id = ?", [item.product_id]);
@@ -636,6 +1051,18 @@ async function fulfillOrder(orderId, updates = {}) {
     }
 
     await run("UPDATE orders SET stock_reduced_at = CURRENT_TIMESTAMP WHERE id = ?", [orderId]);
+
+    const LOW_STOCK_THRESHOLD = 5;
+    const lowStockProducts = [];
+    for (const item of items) {
+      const updated = await get("SELECT id, name, stock_quantity, slug FROM products WHERE id = ?", [item.product_id]);
+      if (updated && updated.stock_quantity <= LOW_STOCK_THRESHOLD) {
+        lowStockProducts.push(updated);
+      }
+    }
+    if (lowStockProducts.length > 0) {
+      sendLowStockAlert(lowStockProducts);
+    }
   }
 
   await run(
@@ -658,6 +1085,11 @@ async function fulfillOrder(orderId, updates = {}) {
   );
 
   await run("DELETE FROM cart_items WHERE user_id = ?", [order.user_id]);
+
+  if (isFirstFulfillment) {
+    sendOrderConfirmationEmail(orderId);
+  }
+
   return get("SELECT * FROM orders WHERE id = ?", [orderId]);
 }
 
@@ -893,8 +1325,9 @@ app.post("/api/auth/forgot-password", async (request, response, next) => {
 
   try {
     const user = await get("SELECT id FROM users WHERE email = ?", [email.toLowerCase()]);
+    const message = "If that account exists, a reset link has been sent.";
     if (!user) {
-      response.json({ message: "If that account exists, a reset link has been prepared." });
+      response.json({ message });
       return;
     }
 
@@ -905,11 +1338,28 @@ app.post("/api/auth/forgot-password", async (request, response, next) => {
       [user.id, token, expiresAt],
     );
 
-    response.json({
-      message: "Password reset token created.",
-      resetToken: token,
-      resetUrl: `${FRONTEND_BASE_URL}/#/reset-password?token=${token}`,
-    });
+    const resetUrl = `${FRONTEND_BASE_URL}/#/reset-password?token=${token}`;
+
+    if (mailer) {
+      const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
+      await mailer.sendMail({
+        from: `Contact_Lens <${fromAddress}>`,
+        to: email.toLowerCase(),
+        subject: "Reset your password",
+        text: `You requested a password reset. Open the link below to set a new password. It expires in 24 hours.\n\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
+        html: `
+          <p>You requested a password reset.</p>
+          <p><a href="${resetUrl}">Reset your password</a></p>
+          <p>This link expires in 24 hours. If you did not request this, you can ignore this email.</p>
+        `.trim(),
+      });
+      response.json({ message });
+    } else {
+      response.json({
+        message,
+        ...(process.env.NODE_ENV !== "production" && { resetUrl }),
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -1008,6 +1458,174 @@ app.get("/auth/facebook/callback", (request, response, next) => {
     const returnTo = encodeURIComponent(String(request.query.state || "/profile"));
     response.redirect(`/#/oauth-complete?token=${token}&returnTo=${returnTo}`);
   })(request, response, next);
+});
+
+async function getMessageWithReplies(messageId) {
+  const msg = await get(
+    `SELECT contact_messages.*, users.name AS user_display_name
+     FROM contact_messages
+     LEFT JOIN users ON users.id = contact_messages.user_id
+     WHERE contact_messages.id = ?`,
+    [messageId],
+  );
+  if (!msg) return null;
+  msg.replies = await all("SELECT * FROM message_replies WHERE message_id = ? ORDER BY created_at ASC", [messageId]);
+  return msg;
+}
+
+app.post("/api/contact", async (request, response, next) => {
+  const { email, message, name, subject = "" } = request.body || {};
+  if (!name || !email || !message) {
+    response.status(400).json({ error: "Name, email, and message are required." });
+    return;
+  }
+
+  try {
+    const userId = request.auth?.user?.id || null;
+    const inserted = await run(
+      "INSERT INTO contact_messages (name, email, subject, message, user_id) VALUES (?, ?, ?, ?, ?)",
+      [name.trim(), email.toLowerCase().trim(), subject.trim(), message.trim(), userId],
+    );
+    response.status(201).json({
+      id: inserted.lastID,
+      message: "Your message has been received. We will get back to you within 1–2 business days.",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/messages", requireAdmin, async (_request, response, next) => {
+  try {
+    const rows = await all(
+      `SELECT contact_messages.*, users.name AS user_display_name
+       FROM contact_messages
+       LEFT JOIN users ON users.id = contact_messages.user_id
+       ORDER BY contact_messages.created_at DESC, contact_messages.id DESC`,
+    );
+    const replies = await all("SELECT * FROM message_replies ORDER BY created_at ASC");
+    const replyMap = {};
+    for (const r of replies) {
+      (replyMap[r.message_id] ??= []).push(r);
+    }
+    response.json(rows.map((row) => ({ ...row, replies: replyMap[row.id] || [] })));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/admin/messages/:id/read", requireAdmin, async (request, response, next) => {
+  try {
+    await run(
+      "UPDATE contact_messages SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP) WHERE id = ?",
+      [request.params.id],
+    );
+    response.json(await getMessageWithReplies(request.params.id));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/admin/messages/:id/reply", requireAdmin, async (request, response, next) => {
+  const { content } = request.body || {};
+  if (!content?.trim()) {
+    response.status(400).json({ error: "Reply content is required." });
+    return;
+  }
+
+  try {
+    const msg = await get("SELECT * FROM contact_messages WHERE id = ?", [request.params.id]);
+    if (!msg) {
+      response.status(404).json({ error: "Message not found." });
+      return;
+    }
+
+    await run(
+      "INSERT INTO message_replies (message_id, sender, content) VALUES (?, 'admin', ?)",
+      [msg.id, content.trim()],
+    );
+    await run(
+      "UPDATE contact_messages SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP) WHERE id = ?",
+      [msg.id],
+    );
+
+    if (mailer) {
+      const subjectLine = msg.subject ? `Re: ${msg.subject}` : "Re: Your support message";
+      await mailer.sendMail({
+        from: `Contact_Lens Support <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+        to: msg.email,
+        subject: subjectLine,
+        text: `Hi ${msg.name},\n\nYou have a reply from our support team:\n\n${content.trim()}\n\nView your conversation: ${FRONTEND_BASE_URL}/#/profile\n\n— Contact_Lens Support`,
+        html: `<p>Hi ${escapeHtmlEmail(msg.name)},</p><p>You have a reply from our support team:</p><blockquote style="border-left:3px solid #ccc;padding-left:12px;margin:12px 0;">${escapeHtmlEmail(content.trim()).replace(/\n/g, "<br>")}</blockquote><p><a href="${FRONTEND_BASE_URL}/#/profile">View your conversation</a></p><p>— Contact_Lens Support</p>`,
+      }).catch((err) => console.error("Reply email error:", err.message));
+    }
+
+    response.status(201).json(await getMessageWithReplies(msg.id));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/messages/my", requireAuth, async (request, response, next) => {
+  try {
+    const rows = await all(
+      "SELECT * FROM contact_messages WHERE user_id = ? ORDER BY created_at DESC, id DESC",
+      [request.auth.user.id],
+    );
+    const replies = rows.length
+      ? await all(
+          `SELECT * FROM message_replies WHERE message_id IN (${rows.map(() => "?").join(",")}) ORDER BY created_at ASC`,
+          rows.map((r) => r.id),
+        )
+      : [];
+    const replyMap = {};
+    for (const r of replies) {
+      (replyMap[r.message_id] ??= []).push(r);
+    }
+    response.json(rows.map((row) => ({ ...row, replies: replyMap[row.id] || [] })));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/messages/:id/reply", requireAuth, async (request, response, next) => {
+  const { content } = request.body || {};
+  if (!content?.trim()) {
+    response.status(400).json({ error: "Reply content is required." });
+    return;
+  }
+
+  try {
+    const msg = await get(
+      "SELECT * FROM contact_messages WHERE id = ? AND user_id = ?",
+      [request.params.id, request.auth.user.id],
+    );
+    if (!msg) {
+      response.status(404).json({ error: "Message not found." });
+      return;
+    }
+
+    await run(
+      "INSERT INTO message_replies (message_id, sender, content) VALUES (?, 'customer', ?)",
+      [msg.id, content.trim()],
+    );
+
+    if (mailer) {
+      const adminEmail = process.env.SMTP_FROM || process.env.SMTP_USER;
+      const subjectLine = msg.subject ? `Re: ${msg.subject} [from ${msg.name}]` : `Customer reply from ${msg.name}`;
+      await mailer.sendMail({
+        from: `Contact_Lens <${adminEmail}>`,
+        to: adminEmail,
+        subject: subjectLine,
+        text: `${msg.name} (${msg.email}) replied to their support thread:\n\n${content.trim()}\n\nView in admin: ${FRONTEND_BASE_URL}/#/admin?tab=messages`,
+        html: `<p><strong>${escapeHtmlEmail(msg.name)}</strong> (${escapeHtmlEmail(msg.email)}) replied:</p><blockquote style="border-left:3px solid #ccc;padding-left:12px;margin:12px 0;">${escapeHtmlEmail(content.trim()).replace(/\n/g, "<br>")}</blockquote><p><a href="${FRONTEND_BASE_URL}/#/admin?tab=messages">View in admin panel</a></p>`,
+      }).catch((err) => console.error("Customer reply email error:", err.message));
+    }
+
+    response.status(201).json(await getMessageWithReplies(msg.id));
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.get("/api/categories", async (_request, response, next) => {
@@ -1374,6 +1992,48 @@ app.get("/api/orders/my", requireAuth, async (request, response, next) => {
   }
 });
 
+app.get("/api/orders/:id/receipt", async (request, response, next) => {
+  try {
+    const tokenFromQuery = request.query.token;
+    let authUser = request.auth?.user;
+
+    if (!authUser && tokenFromQuery) {
+      const session = await get(
+        `SELECT sessions.token, users.* FROM sessions
+         JOIN users ON users.id = sessions.user_id
+         WHERE sessions.token = ? AND sessions.expires_at > datetime('now')`,
+        [tokenFromQuery],
+      );
+      if (session) authUser = sanitizeUser(session);
+    }
+
+    if (!authUser) {
+      response.status(401).send("Not authenticated.");
+      return;
+    }
+
+    const orderId = Number(request.params.id);
+    const order = await get("SELECT * FROM orders WHERE id = ?", [orderId]);
+
+    if (!order || (order.user_id !== authUser.id && authUser.role !== "admin")) {
+      response.status(404).send("Order not found.");
+      return;
+    }
+
+    const user = await get("SELECT name, email FROM users WHERE id = ?", [order.user_id]);
+    const items = await all("SELECT * FROM order_items WHERE order_id = ?", [orderId]);
+    const address = await get("SELECT * FROM addresses WHERE id = ?", [order.address_id]);
+    const settingsRows = await all("SELECT key, value FROM settings");
+    const settingsMap = settingsRows.reduce((acc, row) => { acc[row.key] = row.value; return acc; }, {});
+    const brandName = settingsMap.shop_name || "Contact_Lens";
+
+    response.setHeader("Content-Type", "text/html; charset=utf-8");
+    response.send(generateReceiptHtml({ order, user, items, address, brandName }));
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/api/profile", requireAuth, async (request, response, next) => {
   try {
     const addresses = await all("SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC", [
@@ -1392,7 +2052,7 @@ app.get("/api/profile", requireAuth, async (request, response, next) => {
 
 app.get("/api/admin/dashboard", requireAdmin, async (_request, response, next) => {
   try {
-    const [products, orders, customers, categories, paidRevenue, pendingPayments, lowStock, recentOrders] = await Promise.all([
+    const [products, orders, customers, categories, paidRevenue, pendingPayments, lowStock, recentOrders, unreadMessages] = await Promise.all([
       get("SELECT COUNT(*) AS count FROM products"),
       get("SELECT COUNT(*) AS count FROM orders"),
       get("SELECT COUNT(*) AS count FROM users WHERE role = 'customer'"),
@@ -1418,6 +2078,7 @@ app.get("/api/admin/dashboard", requireAdmin, async (_request, response, next) =
           LIMIT 5
         `,
       ),
+      get("SELECT COUNT(*) AS count FROM contact_messages WHERE read_at IS NULL"),
     ]);
     response.json({
       categories: categories.count,
@@ -1428,6 +2089,7 @@ app.get("/api/admin/dashboard", requireAdmin, async (_request, response, next) =
       pendingPayments: pendingPayments.count,
       products: products.count,
       recentOrders,
+      unreadMessages: unreadMessages.count,
     });
   } catch (error) {
     next(error);
@@ -1847,15 +2509,21 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (request, response, next)
     const nextStatus = payload.status ?? current.status;
     const nextPaymentStatus =
       payload.paymentStatus ?? payload.payment_status ?? payload.paymentstatus ?? current.payment_status;
+    const nextTracking = "tracking_number" in payload ? payload.tracking_number : current.tracking_number;
+
+    const isNewlyShipped = current.status !== "shipped" && nextStatus === "shipped";
 
     await run(
-      `
-        UPDATE orders
-        SET status = ?, payment_status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `,
-      [nextStatus, nextPaymentStatus, request.params.id],
+      `UPDATE orders
+       SET status = ?, payment_status = ?, tracking_number = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [nextStatus, nextPaymentStatus, nextTracking ?? null, request.params.id],
     );
+
+    if (isNewlyShipped) {
+      sendOrderShippedEmail(request.params.id, nextTracking).catch(() => {});
+    }
+
     response.json(await get("SELECT * FROM orders WHERE id = ?", [request.params.id]));
   } catch (error) {
     next(error);
@@ -1872,9 +2540,11 @@ app.get("/api/admin/customers", requireAdmin, async (_request, response, next) =
           users.email,
           users.role,
           users.provider,
+          users.avatar_url,
           users.created_at,
           COUNT(orders.id) AS order_count,
-          COALESCE(SUM(CASE WHEN orders.payment_status = 'paid' THEN orders.grand_total ELSE 0 END), 0) AS total_spent
+          COALESCE(SUM(CASE WHEN orders.payment_status = 'paid' THEN orders.grand_total ELSE 0 END), 0) AS total_spent,
+          MAX(orders.created_at) AS last_order_at
         FROM users
         LEFT JOIN orders ON orders.user_id = users.id
         GROUP BY users.id
@@ -1882,6 +2552,43 @@ app.get("/api/admin/customers", requireAdmin, async (_request, response, next) =
       `,
     );
     response.json(rows);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/admin/customers/:id", requireAdmin, async (request, response, next) => {
+  try {
+    const user = await get(
+      "SELECT id, name, email, role, provider, avatar_url, created_at FROM users WHERE id = ?",
+      [request.params.id],
+    );
+    if (!user) {
+      response.status(404).json({ error: "Customer not found." });
+      return;
+    }
+
+    const [orders, addresses, messages] = await Promise.all([
+      all(
+        `SELECT id, order_number, status, payment_status, grand_total, created_at
+         FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
+        [user.id],
+      ),
+      all("SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC", [user.id]),
+      all(
+        `SELECT contact_messages.id, contact_messages.subject, contact_messages.message,
+                contact_messages.created_at, contact_messages.read_at,
+                COUNT(message_replies.id) AS reply_count
+         FROM contact_messages
+         LEFT JOIN message_replies ON message_replies.message_id = contact_messages.id
+         WHERE contact_messages.user_id = ?
+         GROUP BY contact_messages.id
+         ORDER BY contact_messages.created_at DESC`,
+        [user.id],
+      ),
+    ]);
+
+    response.json({ user, orders, addresses, messages });
   } catch (error) {
     next(error);
   }

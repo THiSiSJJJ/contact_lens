@@ -9,13 +9,22 @@
       content="Contact_Lens — an online shop for soft silhouettes and everyday lifestyle pieces."
     />
     <meta name="google" content="notranslate" />
+    <meta name="description" content="Your trusted contact lens store — daily, monthly, colored, and toric lenses with fast delivery." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Contact_Lens" />
+    <meta property="og:title" content="Contact_Lens" />
+    <meta property="og:description" content="Your trusted contact lens store — daily, monthly, colored, and toric lenses with fast delivery." />
+    <meta property="og:image" content="" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Contact_Lens" />
+    <meta name="twitter:description" content="Your trusted contact lens store — daily, monthly, colored, and toric lenses with fast delivery." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=20260424q" />
+    <link rel="stylesheet" href="/styles.css?v=20260426m" />
   </head>
   <body>
     <header class="site-header">
@@ -28,7 +37,7 @@
         </form>
 
         <div class="header-actions">
-          <a href="#/favorites" class="header-icon-btn" id="favorite-link" title="Favorites">★ <span id="favorite-count">0</span></a>
+          <a href="#/favorites" class="header-icon-btn" id="favorite-link" title="Favorites">♥ <span id="favorite-count">0</span></a>
           <a href="#/cart" class="header-icon-btn" id="cart-link" title="Cart">🛒 <span id="cart-count">0</span></a>
           <button class="lang-toggle" id="lang-toggle">MN</button>
           <a href="#/register" class="header-link" id="signup-link" data-i18n="header.signUp">Sign Up</a>
@@ -92,10 +101,37 @@
           <strong data-i18n="footer.support">Support</strong>
           <a href="#/contact" data-i18n="footer.contactUs">Contact Us</a>
           <a href="#/checkout" data-i18n="footer.shippingAddress">Shipping Address</a>
+          <a href="#/returns">Return Policy</a>
+          <a href="#/terms">Terms of Service</a>
         </div>
       </div>
     </footer>
 
-    <script src="/app.js?v=20260424q"></script>
+    <!-- Mobile bottom navigation bar -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+      <div class="mbn-inner-grid">
+        <a href="#/" class="mbn-item" id="mbn-home">
+          <span class="mbn-icon">⌂</span>
+          <span class="mbn-label">Home</span>
+        </a>
+        <a href="#/shop" class="mbn-item" id="mbn-shop">
+          <span class="mbn-icon">◉</span>
+          <span class="mbn-label">Shop</span>
+        </a>
+        <a href="#/cart" class="mbn-item" id="mbn-cart-tab">
+          <span class="mbn-icon-wrap">
+            <span>🛒</span>
+            <span class="mbn-badge hidden" id="mbn-cart-count">0</span>
+          </span>
+          <span class="mbn-label">Cart</span>
+        </a>
+        <a href="#/profile" class="mbn-item" id="mbn-account">
+          <span class="mbn-icon">⊙</span>
+          <span class="mbn-label">Account</span>
+        </a>
+      </div>
+    </nav>
+
+    <script src="/app.js?v=20260426m"></script>
   </body>
 </html>

@@ -246,6 +246,33 @@ const brandLogo = document.querySelector(".brand-logo");
 const signupLink = document.querySelector("#signup-link");
 const headerLogoutBtn = document.querySelector("#header-logout-btn");
 
+function setMetaTag(attr, key, content) {
+  let el = document.querySelector(`meta[${attr}="${key}"]`);
+  if (!el) {
+    el = document.createElement("meta");
+    el.setAttribute(attr, key);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("content", content || "");
+}
+
+function updatePageMeta({ title, description, image } = {}) {
+  const brand = currentBrandName();
+  const fullTitle = title ? `${title} — ${brand}` : brand;
+  const desc = (description || "Your trusted contact lens store — daily, monthly, colored, and toric lenses with fast delivery.").slice(0, 160);
+  document.title = fullTitle;
+  setMetaTag("name", "description", desc);
+  setMetaTag("property", "og:title", fullTitle);
+  setMetaTag("property", "og:description", desc);
+  setMetaTag("property", "og:url", window.location.href);
+  setMetaTag("name", "twitter:title", fullTitle);
+  setMetaTag("name", "twitter:description", desc);
+  if (image) {
+    setMetaTag("property", "og:image", image);
+    setMetaTag("name", "twitter:image", image);
+  }
+}
+
 headerLogoutBtn?.addEventListener("click", async () => {
   await api("/api/auth/logout", { method: "POST" });
   setToken("");
@@ -483,25 +510,25 @@ function cardMarkup(product) {
         <a href="#/product/${product.slug}" class="product-card-image-link">
           ${primaryImage
             ? `<img src="${primaryImage}" alt="${escapeHtml(product.name)}" />`
-            : `<span class="product-card-placeholder">◻</span>`}
+            : `<span class="product-card-placeholder"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="72" height="72"><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(15,170,181,0.22)" stroke-width="5"/><circle cx="48" cy="48" r="25" fill="none" stroke="rgba(15,170,181,0.32)" stroke-width="3"/><circle cx="48" cy="48" r="10" fill="rgba(15,170,181,0.18)"/><ellipse cx="36" cy="33" rx="8" ry="5" fill="rgba(255,255,255,0.55)" transform="rotate(-35 36 33)"/></svg></span>`}
         </a>
         ${hasSale ? `<span class="product-badge sale-badge">${t("product.sale")}</span>` : ""}
         ${outOfStock ? `<span class="product-badge sold-out-badge">${t("product.soldOut")}</span>` : ""}
         <button class="product-fav-btn${isFavorited ? " favorited" : ""}" data-action="favorite" data-product-id="${product.id}" title="${isFavorited ? "Remove from favorites" : "Add to favorites"}">
-          ${isFavorited ? "★" : "☆"}
+          ${isFavorited ? "♥" : "♡"}
         </button>
       </div>
       <div class="product-card-copy">
         <p class="product-card-brand">${escapeHtml(product.brand)}</p>
         <a href="#/product/${product.slug}" class="product-card-name">${escapeHtml(productName(product))}</a>
-        <p class="product-card-price ${hasSale ? "sale" : ""}">
-          ${formatJPY(hasSale ? product.discountPrice : product.price)}
+        <p class="product-card-price${hasSale ? " sale" : ""}">
+          <strong>${formatJPY(hasSale ? product.discountPrice : product.price)}</strong>
           ${hasSale ? `<span class="price-strike">${formatJPY(product.price)}</span>` : ""}
           <span class="small-label">${t("product.taxIncluded")}</span>
         </p>
       </div>
       <div class="product-card-actions">
-        <button class="chip" data-action="cart" data-product-id="${product.id}" ${outOfStock ? "disabled" : ""}>${t("product.addToCart")}</button>
+        <button class="card-atc-btn" data-action="cart" data-product-id="${product.id}" ${outOfStock ? "disabled" : ""}>${outOfStock ? t("product.soldOut") : t("product.addToCart")}</button>
       </div>
     </article>
   `;
@@ -628,6 +655,7 @@ function updateHeader() {
   favoriteCount.textContent = state.favorites.length;
   cartCount.textContent = state.cart.reduce((sum, item) => sum + item.quantity, 0);
   updateMobileMenu();
+  updateBottomNav();
 }
 
 function getHashRoute() {
@@ -652,18 +680,19 @@ function loginHash(returnTo = "/profile") {
 }
 
 function renderHome() {
+  updatePageMeta({});
   const featuredCards = (state.home?.featured || []).slice(0, 5).map(cardMarkup).join("");
   const newestCards = (state.home?.newest || []).slice(0, 10).map(cardMarkup).join("");
   const s = state.settings || {};
   const isAdmin = state.me?.role === "admin";
 
   const sortedCats = [...state.categories].sort((a, b) => {
-    const la = (state.lang === "mn" && a.name_mn ? a.name_mn : a.name).toLowerCase();
-    const lb = (state.lang === "mn" && b.name_mn ? b.name_mn : b.name).toLowerCase();
+    const la = (currentLang === "mn" && a.name_mn ? a.name_mn : a.name).toLowerCase();
+    const lb = (currentLang === "mn" && b.name_mn ? b.name_mn : b.name).toLowerCase();
     return la.localeCompare(lb);
   });
   const catTiles = sortedCats.map((cat) => {
-    const label = state.lang === "mn" && cat.name_mn ? cat.name_mn : cat.name;
+    const label = currentLang === "mn" && cat.name_mn ? cat.name_mn : cat.name;
     return `<a href="#/shop?category=${cat.slug}" class="home-cat-tile">${escapeHtml(label)}</a>`;
   }).join("");
 
@@ -734,6 +763,7 @@ async function renderShop(params) {
   const search = params.get("search") || "";
   const category = params.get("category") || "";
   const sort = params.get("sort") || "latest";
+  updatePageMeta({ title: category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Lenses` : "Shop" });
 
   const query = new URLSearchParams();
   if (search) query.set("search", search);
@@ -754,7 +784,7 @@ async function renderShop(params) {
       <input type="search" name="search" class="shop-search" placeholder="${t("shop.searchPlaceholder")}" value="${escapeHtml(search)}" />
       <select name="category" class="shop-select">
         <option value="">${t("shop.allCategories")}</option>
-        ${state.categories.map((item) => `<option value="${item.slug}" ${item.slug === category ? "selected" : ""}>${escapeHtml(state.lang === "mn" && item.name_mn ? item.name_mn : item.name)}</option>`).join("")}
+        ${state.categories.map((item) => `<option value="${item.slug}" ${item.slug === category ? "selected" : ""}>${escapeHtml(currentLang === "mn" && item.name_mn ? item.name_mn : item.name)}</option>`).join("")}
       </select>
       <select name="sort" class="shop-select">
         <option value="latest" ${sort === "latest" ? "selected" : ""}>${t("shop.newestFirst")}</option>
@@ -767,15 +797,27 @@ async function renderShop(params) {
     <section class="product-grid">${products.map(cardMarkup).join("")}</section>
   `;
 
-  document.querySelector("#shop-filter-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
+  function applyShopFilters() {
+    const form = new FormData(document.querySelector("#shop-filter-form"));
     const nextParams = new URLSearchParams();
     for (const [key, value] of form.entries()) {
       if (value) nextParams.set(key, value.toString());
     }
-    location.hash = `#/shop?${nextParams.toString()}`;
+    const next = `#/shop?${nextParams.toString()}`;
+    if (location.hash !== next) {
+      location.hash = next;
+    } else {
+      renderShop(nextParams).catch(() => {});
+    }
+  }
+
+  document.querySelector("#shop-filter-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    applyShopFilters();
   });
+
+  document.querySelector("[name='sort']")?.addEventListener("change", applyShopFilters);
+  document.querySelector("[name='category']")?.addEventListener("change", applyShopFilters);
 
   bindCardActions(app);
 }
@@ -788,6 +830,7 @@ async function renderProduct(path) {
     return;
   }
   const product = await response.json();
+  updatePageMeta({ title: productName(product), description: product.description, image: product.images?.[0]?.imageUrl });
   const hasSale = product.discountPrice && product.discountPrice < product.price;
 
   const stockLabel = product.stockQuantity > 10
@@ -795,6 +838,10 @@ async function renderProduct(path) {
     : product.stockQuantity > 0
     ? `<span class="stock-badge stock-low">Only ${product.stockQuantity} left</span>`
     : `<span class="stock-badge stock-out">Out of stock</span>`;
+
+  const outOfStock = product.stockQuantity <= 0;
+  const isFavorited = state.favorites.some((fav) => fav.id === product.id);
+  const displayPrice = formatJPY(hasSale ? product.discountPrice : product.price);
 
   app.innerHTML = `
     <a href="#/shop" class="back-link">← Back to shop</a>
@@ -813,7 +860,7 @@ async function renderProduct(path) {
         <h1 class="detail-title">${escapeHtml(productName(product))}</h1>
 
         <div class="detail-price-row">
-          <span class="detail-price">${formatJPY(hasSale ? product.discountPrice : product.price)}</span>
+          <span class="detail-price">${displayPrice}</span>
           ${hasSale ? `<span class="detail-price-orig">${formatJPY(product.price)}</span>` : ""}
           <span class="detail-tax">Tax incl.</span>
         </div>
@@ -828,16 +875,42 @@ async function renderProduct(path) {
           ${product.sizes.length  ? `<div class="detail-meta-row"><dt>Sizes</dt><dd>${product.sizes.map(s=>`<span class="detail-tag">${escapeHtml(s)}</span>`).join("")}</dd></div>` : ""}
         </dl>
 
-        <div class="detail-actions">
-          <button class="detail-add-btn button" data-action="cart" data-product-id="${product.id}" ${product.stockQuantity <= 0 ? "disabled" : ""}>
-            ${product.stockQuantity <= 0 ? "Out of Stock" : "Add to Cart"}
+        <div class="detail-actions" id="detail-actions-anchor">
+          <button class="detail-add-btn button" data-action="cart" data-product-id="${product.id}" ${outOfStock ? "disabled" : ""}>
+            ${outOfStock ? "Out of Stock" : "Add to Cart"}
           </button>
-          <button class="detail-fav-btn" data-action="favorite" data-product-id="${product.id}" title="Add to favorites">♡</button>
+          <button class="detail-fav-btn${isFavorited ? " favorited" : ""}" data-action="favorite" data-product-id="${product.id}" title="${isFavorited ? "Remove from favorites" : "Add to favorites"}">
+            ${isFavorited ? "♥" : "♡"}
+          </button>
         </div>
       </div>
     </section>
+
+    <div class="sticky-atc" id="sticky-atc" aria-hidden="true">
+      <span class="sticky-atc-name">${escapeHtml(productName(product))}</span>
+      <span class="sticky-atc-price">${displayPrice}</span>
+      <button class="sticky-atc-btn button" data-action="cart" data-product-id="${product.id}" ${outOfStock ? "disabled" : ""}>
+        ${outOfStock ? "Out of Stock" : "Add to Cart"}
+      </button>
+      <button class="sticky-atc-fav detail-fav-btn${isFavorited ? " favorited" : ""}" data-action="favorite" data-product-id="${product.id}" title="${isFavorited ? "Remove from favorites" : "Add to favorites"}">
+        ${isFavorited ? "♥" : "♡"}
+      </button>
+    </div>
   `;
   bindCardActions(app);
+
+  const anchor = document.getElementById("detail-actions-anchor");
+  const stickyBar = document.getElementById("sticky-atc");
+  if (anchor && stickyBar && window.IntersectionObserver) {
+    new IntersectionObserver(
+      ([entry]) => {
+        const show = !entry.isIntersecting;
+        stickyBar.classList.toggle("visible", show);
+        stickyBar.setAttribute("aria-hidden", String(!show));
+      },
+      { threshold: 0 },
+    ).observe(anchor);
+  }
 }
 
 function cartSummary(items) {
@@ -851,6 +924,7 @@ function cartSummary(items) {
 }
 
 function renderCart() {
+  updatePageMeta({ title: "Shopping Cart" });
   const summary = cartSummary(state.cart);
   const stepBar = `
     <div class="checkout-step-bar">
@@ -970,6 +1044,7 @@ function renderCart() {
 }
 
 async function renderCheckout(params = new URLSearchParams()) {
+  updatePageMeta({ title: "Checkout" });
   if (!state.me) {
     location.hash = loginHash("/checkout");
     return;
@@ -1198,6 +1273,7 @@ async function renderOrderConfirmation(params) {
 }
 
 async function renderRegister(params) {
+  updatePageMeta({ title: "Create Account" });
   const returnTo = normalizeReturnTo(params.get("returnTo") || "/profile");
   if (state.me) { location.hash = `#${returnTo}`; return; }
 
@@ -1301,6 +1377,7 @@ async function renderRegister(params) {
 }
 
 async function renderLogin(params) {
+  updatePageMeta({ title: "Sign In" });
   const returnTo = normalizeReturnTo(params.get("returnTo"));
   const oauthMessage = params.get("oauth");
   if (state.me) { location.hash = `#${returnTo}`; return; }
@@ -1424,9 +1501,12 @@ async function renderLogin(params) {
     });
     const data = await response.json();
     const result = document.querySelector("#forgot-result");
-    result.innerHTML = data.resetToken
-      ? `Check your email, or <a href="#/reset-password?token=${encodeURIComponent(data.resetToken)}" style="color:var(--teal);">reset now</a> (dev mode).`
-      : escapeHtml(data.message || "Reset link sent if that address is registered.");
+    if (data.resetUrl) {
+      const hash = data.resetUrl.replace(/^[^#]+/, "");
+      result.innerHTML = `Check your email — or <a href="${escapeHtml(hash)}" style="color:var(--teal);">click here to reset now</a> (dev mode).`;
+    } else {
+      result.textContent = data.message || "Reset link sent if that address is registered.";
+    }
   });
 }
 
@@ -1437,12 +1517,11 @@ async function renderResetPassword(params) {
       <div class="section-head">
         <div>
           <h2>Reset Password</h2>
-          <p>Reset Password</p>
+          <p>Choose a new password for your account.</p>
         </div>
       </div>
-      <p class="muted">Enter the token from your email and choose a new password.</p>
       <form id="reset-password-form" class="panel">
-        <input name="token" value="${escapeHtml(token)}" placeholder="Reset token" required />
+        ${token ? `<input name="token" type="hidden" value="${escapeHtml(token)}" />` : `<input name="token" placeholder="Reset token" required />`}
         <input name="password" type="password" placeholder="New password (8 characters minimum)" required />
         <input name="confirmPassword" type="password" placeholder="Confirm new password" required />
         <button class="button" type="submit">Update Password</button>
@@ -1478,6 +1557,7 @@ async function renderResetPassword(params) {
 }
 
 async function renderProfile() {
+  updatePageMeta({ title: "My Account" });
   if (!state.me) {
     location.hash = "#/login";
     return;
@@ -1527,7 +1607,7 @@ async function renderProfile() {
           <span class="pql-arrow">→</span>
         </a>
         <a href="#/favorites" class="profile-quick-link">
-          <span class="pql-icon">★</span>
+          <span class="pql-icon">♥</span>
           <span class="pql-label">My Favorites</span>
           <span class="pql-arrow">→</span>
         </a>
@@ -1569,9 +1649,7 @@ async function renderProfile() {
         </div>
       </div>
 
-      <div class="profile-support-note">
-        Need help? Email us at <a href="mailto:${escapeHtml(supportEmail())}" style="color:var(--teal)">${escapeHtml(supportEmail())}</a>
-      </div>
+      <div id="profile-messages-section"></div>
 
     </div>
   `;
@@ -1582,9 +1660,79 @@ async function renderProfile() {
     await bootstrapAuthState();
     location.hash = "#/";
   });
+
+  const messagesSection = document.querySelector("#profile-messages-section");
+  const msgsRes = await api("/api/messages/my");
+  const myMessages = await msgsRes.json();
+
+  const subjectLabels = { order: "Order inquiry", return: "Return or exchange", product: "Product question", shipping: "Shipping & delivery", other: "Other" };
+
+  messagesSection.innerHTML = `
+    <div class="profile-section">
+      <div class="profile-section-head">
+        <h2>Support Messages</h2>
+        <span class="profile-section-sub"><a href="#/contact" style="color:var(--teal)">New message →</a></span>
+      </div>
+      ${myMessages.length ? myMessages.map((msg) => `
+        <div class="message-row" style="margin-bottom:16px;" data-profile-msg="${msg.id}">
+          <div class="message-row-meta">
+            ${msg.subject ? `<span class="message-subject-badge">${escapeHtml(subjectLabels[msg.subject] || msg.subject)}</span>` : ""}
+            <span class="atab-meta">${new Date(msg.created_at).toLocaleDateString()}</span>
+          </div>
+          <div class="message-thread">
+            <div class="thread-bubble thread-bubble-customer">
+              <div class="thread-bubble-header">
+                <span class="thread-sender">You</span>
+                <span class="thread-time">${new Date(msg.created_at).toLocaleString()}</span>
+              </div>
+              <p>${escapeHtml(msg.message)}</p>
+            </div>
+            ${(msg.replies || []).map((r) => `
+              <div class="thread-bubble ${r.sender === "admin" ? "thread-bubble-admin" : "thread-bubble-customer"}">
+                <div class="thread-bubble-header">
+                  <span class="thread-sender">${r.sender === "admin" ? "Support" : "You"}</span>
+                  <span class="thread-time">${new Date(r.created_at).toLocaleString()}</span>
+                </div>
+                <p>${escapeHtml(r.content)}</p>
+              </div>`).join("")}
+          </div>
+          <div class="message-reply-form">
+            <textarea class="reply-textarea" placeholder="Reply to support…" rows="2" data-profile-reply-for="${msg.id}"></textarea>
+            <div class="message-reply-actions">
+              <button class="button button-sm profile-send-reply" data-msg-id="${msg.id}">Send</button>
+            </div>
+          </div>
+        </div>`).join("")
+      : `<div class="profile-empty">No messages yet. <a href="#/contact" style="color:var(--teal)">Contact support</a> if you need help.</div>`}
+    </div>
+  `;
+
+  messagesSection.querySelectorAll(".profile-send-reply").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const textarea = messagesSection.querySelector(`textarea[data-profile-reply-for="${btn.dataset.msgId}"]`);
+      const content = textarea.value.trim();
+      if (!content) return;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      const res = await api(`/api/messages/${btn.dataset.msgId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) {
+        await renderProfile();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Could not send reply.");
+        btn.disabled = false;
+        btn.textContent = "Send";
+      }
+    });
+  });
 }
 
 async function renderOrders() {
+  updatePageMeta({ title: "Order History" });
   if (!state.me) {
     location.hash = "#/login";
     return;
@@ -1616,7 +1764,11 @@ async function renderOrders() {
                   <span class="ostatus ${paymentColor[order.payment_status] || ""}">${escapeHtml(paymentStatusLabel(order.payment_status))}</span>
                 </div>
                 <div class="ocn-method muted">${escapeHtml(paymentMethodLabel(order.payment_method))}</div>
-                <div class="ocn-total">${formatJPY(order.grand_total)}</div>
+                <div class="ocn-total-row">
+                  <span class="ocn-total">${formatJPY(order.grand_total)}</span>
+                  <a href="/api/orders/${order.id}/receipt?token=${encodeURIComponent(state.authToken)}" target="_blank" rel="noopener" class="ocn-receipt-btn">Receipt ↗</a>
+                </div>
+                ${order.tracking_number ? `<div class="ocn-tracking">📦 Tracking: <strong>${escapeHtml(order.tracking_number)}</strong></div>` : ""}
               </article>`).join("")
           : `<div class="profile-empty" style="text-align:center;padding:60px 20px;">
                <div style="font-size:2.5rem;margin-bottom:12px;">📦</div>
@@ -1649,6 +1801,7 @@ function renderFavorites() {
 }
 
 function renderContact() {
+  updatePageMeta({ title: "Contact" });
   app.innerHTML = `
     <div class="contact-layout">
       <div class="contact-info panel">
@@ -1693,8 +1846,8 @@ function renderContact() {
         <h2>${t("contact.send")}</h2>
         <form id="contact-form">
           <div class="form-row-two">
-            <input name="name" placeholder="${t("contact.namePlaceholder")}" required />
-            <input name="email" type="email" placeholder="${t("contact.emailPlaceholder")}" required />
+            <input name="name" placeholder="${t("contact.namePlaceholder")}" required value="${state.me ? escapeHtml(state.me.name) : ""}" ${state.me ? 'readonly style="background:var(--surface-soft);cursor:default;"' : ""} />
+            <input name="email" type="email" placeholder="${t("contact.emailPlaceholder")}" required value="${state.me ? escapeHtml(state.me.email) : ""}" ${state.me ? 'readonly style="background:var(--surface-soft);cursor:default;"' : ""} />
           </div>
           <select name="subject">
             <option value="">${t("contact.subjectPlaceholder")}</option>
@@ -1715,17 +1868,38 @@ function renderContact() {
   const submitBtn = document.querySelector("#contact-submit-btn");
   const result = document.querySelector("#contact-result");
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     submitBtn.disabled = true;
     submitBtn.textContent = t("contact.sending");
-    setTimeout(() => {
-      result.className = "success";
-      result.textContent = t("contact.successMsg");
-      form.reset();
+    const data = new FormData(form);
+    try {
+      const response = await api("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.get("name"),
+          email: data.get("email"),
+          subject: data.get("subject") || "",
+          message: data.get("message"),
+        }),
+      });
+      const json = await response.json();
+      if (response.ok) {
+        result.className = "success";
+        result.textContent = json.message;
+        form.reset();
+      } else {
+        result.className = "error";
+        result.textContent = json.error || "Something went wrong. Please try again.";
+      }
+    } catch {
+      result.className = "error";
+      result.textContent = "Could not send message. Please try again.";
+    } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = t("contact.submitBtn");
-    }, 600);
+    }
   });
 }
 
@@ -3024,6 +3198,13 @@ function renderOrdersTab(adminContent, orders, reload) {
             </div>
           </div>
           <div class="order-row-controls">
+            <div class="atab-label">Tracking number</div>
+            <div class="tracking-input-row">
+              <input class="tracking-input" type="text" placeholder="e.g. JPN123456789" value="${escapeHtml(order.tracking_number || "")}" data-tracking-order="${order.id}" />
+              <button class="btn-save-tracking" data-save-tracking="${order.id}">Save</button>
+            </div>
+          </div>
+          <div class="order-row-controls">
             <div class="atab-label">Payment</div>
             <div class="status-chips">
               ${PAYMENT_STATUSES.map(s => `<button class="status-chip-btn${order.payment_status===s?" active "+paymentStatusColor[s]:""}" data-payment-order="${order.id}" data-current-status="${escapeHtml(order.status)}" data-payment-status="${s}">${s}</button>`).join("")}
@@ -3037,10 +3218,11 @@ function renderOrdersTab(adminContent, orders, reload) {
   adminContent.querySelectorAll("[data-status-order]").forEach((button) => {
     button.addEventListener("click", async () => {
       button.disabled = true;
+      const trackingInput = adminContent.querySelector(`[data-tracking-order="${button.dataset.statusOrder}"]`);
       const response = await api(`/api/admin/orders/${button.dataset.statusOrder}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: button.dataset.status }),
+        body: JSON.stringify({ status: button.dataset.status, tracking_number: trackingInput?.value.trim() || null }),
       });
       if (response.ok) {
         showToast(`Order status → ${button.dataset.status}`);
@@ -3048,6 +3230,29 @@ function renderOrdersTab(adminContent, orders, reload) {
       } else {
         button.disabled = false;
         showToast("Could not update order status.");
+      }
+    });
+  });
+
+  adminContent.querySelectorAll("[data-save-tracking]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      const orderId = button.dataset.saveTracking;
+      const trackingInput = adminContent.querySelector(`[data-tracking-order="${orderId}"]`);
+      const currentStatusChip = adminContent.querySelector(`[data-status-order="${orderId}"].active`);
+      const response = await api(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tracking_number: trackingInput?.value.trim() || null,
+          status: currentStatusChip?.dataset.status,
+        }),
+      });
+      button.disabled = false;
+      if (response.ok) {
+        showToast("Tracking number saved.");
+      } else {
+        showToast("Could not save tracking number.");
       }
     });
   });
@@ -3074,16 +3279,91 @@ function renderOrdersTab(adminContent, orders, reload) {
   });
 }
 
+function renderMessagesTab(adminContent, messages, reload) {
+  const subjectLabels = { order: "Order inquiry", return: "Return or exchange", product: "Product question", shipping: "Shipping & delivery", other: "Other" };
+
+  adminContent.innerHTML = `
+    <div class="atab-list">
+      ${messages.length ? messages.map((msg) => `
+        <article class="message-row${msg.read_at ? "" : " message-unread"}" data-message-id="${msg.id}">
+          <div class="message-row-meta">
+            <strong class="atab-name">${escapeHtml(msg.name)}</strong>
+            <span class="atab-meta">${escapeHtml(msg.email)}</span>
+            ${msg.subject ? `<span class="message-subject-badge">${escapeHtml(subjectLabels[msg.subject] || msg.subject)}</span>` : ""}
+            ${!msg.read_at ? `<span class="message-subject-badge" style="background:var(--teal);color:#fff;border-color:var(--teal);">New</span>` : ""}
+          </div>
+
+          <div class="message-thread">
+            <div class="thread-bubble thread-bubble-customer">
+              <div class="thread-bubble-header">
+                <span class="thread-sender">${escapeHtml(msg.name)}</span>
+                <span class="thread-time">${new Date(msg.created_at).toLocaleString()}</span>
+              </div>
+              <p>${escapeHtml(msg.message)}</p>
+            </div>
+            ${(msg.replies || []).map((r) => `
+              <div class="thread-bubble ${r.sender === "admin" ? "thread-bubble-admin" : "thread-bubble-customer"}">
+                <div class="thread-bubble-header">
+                  <span class="thread-sender">${r.sender === "admin" ? "Support" : escapeHtml(msg.name)}</span>
+                  <span class="thread-time">${new Date(r.created_at).toLocaleString()}</span>
+                </div>
+                <p>${escapeHtml(r.content)}</p>
+              </div>`).join("")}
+          </div>
+
+          <div class="message-reply-form">
+            <textarea class="reply-textarea" placeholder="Write a reply to ${escapeHtml(msg.name)}…" rows="3" data-reply-for="${msg.id}"></textarea>
+            <div class="message-reply-actions">
+              <button class="button button-sm send-reply-btn" data-msg-id="${msg.id}">Send reply</button>
+            </div>
+          </div>
+        </article>`).join("")
+      : `<div class="atab-empty">No messages yet.</div>`}
+    </div>
+  `;
+
+  adminContent.querySelectorAll(".send-reply-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const textarea = adminContent.querySelector(`textarea[data-reply-for="${btn.dataset.msgId}"]`);
+      const content = textarea.value.trim();
+      if (!content) return;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      const res = await api(`/api/admin/messages/${btn.dataset.msgId}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (res.ok) {
+        await reload();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Could not send reply.");
+        btn.disabled = false;
+        btn.textContent = "Send reply";
+      }
+    });
+  });
+}
+
 function renderCustomersTab(adminContent, customers, reload) {
   adminContent.innerHTML = `
     <div class="atab-list">
       ${customers.length ? customers.map((customer) => `
-        <article class="customer-row">
-          <div class="atab-avatar atab-avatar-lg">${escapeHtml(customer.name.charAt(0).toUpperCase())}</div>
+        <article class="customer-row" data-cid="${customer.id}">
+          <div class="atab-avatar atab-avatar-lg">
+            ${customer.avatar_url
+              ? `<img src="${escapeHtml(customer.avatar_url)}" alt="" class="customer-avatar-img" />`
+              : escapeHtml(customer.name.charAt(0).toUpperCase())}
+          </div>
           <div class="customer-row-info">
             <strong class="atab-name">${escapeHtml(customer.name)}</strong>
             <span class="atab-meta">${escapeHtml(customer.email)}</span>
-            <span class="atab-meta">via ${escapeHtml(customer.provider)}</span>
+            <span class="atab-meta">
+              via ${escapeHtml(customer.provider)}
+              &middot; joined ${new Date(customer.created_at).toLocaleDateString()}
+              ${customer.last_order_at ? `&middot; last order ${new Date(customer.last_order_at).toLocaleDateString()}` : ""}
+            </span>
           </div>
           <div class="customer-row-stats">
             <div class="cstat"><span class="cstat-val">${customer.order_count || 0}</span><span class="cstat-label">orders</span></div>
@@ -3092,7 +3372,9 @@ function renderCustomersTab(adminContent, customers, reload) {
           <div class="customer-row-role">
             <button class="role-btn${customer.role==="customer"?" role-btn-active":""}" data-customer-role="${customer.id}" data-role="customer">Customer</button>
             <button class="role-btn role-btn-admin${customer.role==="admin"?" role-btn-active-admin":""}" data-customer-role="${customer.id}" data-role="admin">Admin</button>
+            <button class="role-btn customer-details-btn" data-details-id="${customer.id}">Details ▾</button>
           </div>
+          <div class="customer-details-panel hidden" id="cdetails-${customer.id}"></div>
         </article>`).join("")
       : `<div class="atab-empty">No customers yet.</div>`}
     </div>
@@ -3114,6 +3396,58 @@ function renderCustomersTab(adminContent, customers, reload) {
       }
       showToast(`Role set to ${button.dataset.role}.`);
       await reload();
+    });
+  });
+
+  adminContent.querySelectorAll(".customer-details-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.detailsId;
+      const panel = document.getElementById(`cdetails-${id}`);
+      if (!panel.classList.contains("hidden")) {
+        panel.classList.add("hidden");
+        btn.textContent = "Details ▾";
+        return;
+      }
+      btn.textContent = "Loading…";
+      const res = await api(`/api/admin/customers/${id}`);
+      const d = await res.json();
+      const statusBadge = (s) => `<span class="ostatus ostatus-${s === "confirmed" || s === "completed" ? "green" : s === "shipped" ? "purple" : s === "cancelled" ? "red" : "amber"}">${s}</span>`;
+      panel.innerHTML = `
+        <div class="cdetails-grid">
+          <div class="cdetails-block">
+            <h4>Account</h4>
+            <div class="cdetails-row"><span>Email</span><strong>${escapeHtml(d.user.email)}</strong></div>
+            <div class="cdetails-row"><span>Provider</span><strong>${escapeHtml(d.user.provider)}</strong></div>
+            <div class="cdetails-row"><span>Joined</span><strong>${new Date(d.user.created_at).toLocaleDateString()}</strong></div>
+          </div>
+          <div class="cdetails-block">
+            <h4>Orders ${d.orders.length ? `(${d.orders.length})` : ""}</h4>
+            ${d.orders.length ? d.orders.map((o) => `
+              <div class="cdetails-row">
+                <span>${escapeHtml(o.order_number)}</span>
+                <span>${statusBadge(o.status)} ${formatJPY(o.grand_total)}</span>
+              </div>`).join("") : `<p class="muted" style="font-size:0.85rem;">No orders yet.</p>`}
+          </div>
+          <div class="cdetails-block">
+            <h4>Addresses ${d.addresses.length ? `(${d.addresses.length})` : ""}</h4>
+            ${d.addresses.length ? d.addresses.map((a) => `
+              <div class="cdetails-row">
+                <span>${escapeHtml(a.full_name)}</span>
+                <span>${escapeHtml(a.prefecture)}, ${escapeHtml(a.city)}</span>
+              </div>`).join("") : `<p class="muted" style="font-size:0.85rem;">No addresses saved.</p>`}
+          </div>
+          <div class="cdetails-block">
+            <h4>Messages ${d.messages.length ? `(${d.messages.length})` : ""}</h4>
+            ${d.messages.length ? d.messages.map((m) => `
+              <div class="cdetails-row">
+                <span>${m.subject || "General"}</span>
+                <span>${m.reply_count} repl${m.reply_count === 1 ? "y" : "ies"} &middot; ${new Date(m.created_at).toLocaleDateString()}</span>
+              </div>`).join("") : `<p class="muted" style="font-size:0.85rem;">No messages sent.</p>`}
+          </div>
+        </div>
+      `;
+      panel.classList.remove("hidden");
+      btn.textContent = "Details ▴";
     });
   });
 }
@@ -3380,6 +3714,7 @@ function renderHomeTab(adminContent, settings, reload) {
 }
 
 async function renderAdmin(params) {
+  updatePageMeta({ title: "Admin" });
   if (!state.me || state.me.role !== "admin") {
     location.hash = "#/login";
     return;
@@ -3390,18 +3725,20 @@ async function renderAdmin(params) {
   const urlParams = params instanceof URLSearchParams ? params : new URLSearchParams(params || "");
   let currentTab = urlParams.get("tab") || "dashboard";
 
-  const [dashboard, products, categories, orders, customers, settings] = await Promise.all([
+  const [dashboard, products, categories, orders, customers, settings, messages] = await Promise.all([
     api("/api/admin/dashboard").then((res) => res.json()),
     api("/api/admin/products").then((res) => res.json()),
     api("/api/admin/categories").then((res) => res.json()),
     api("/api/admin/orders").then((res) => res.json()),
     api("/api/admin/customers").then((res) => res.json()),
     api("/api/admin/settings").then((res) => res.json()),
+    api("/api/admin/messages").then((res) => res.json()),
   ]);
 
-  const tabNames = ["dashboard", "products", "categories", "orders", "customers", "settings", "home"];
+  const tabNames = ["dashboard", "products", "categories", "orders", "customers", "messages", "settings", "home"];
 
-  const tabLabels = { dashboard: "Dashboard", products: "Products", categories: "Categories", orders: "Orders", customers: "Customers", settings: "Settings", home: "Home Page" };
+  const unreadCount = dashboard.unreadMessages || 0;
+  const tabLabels = { dashboard: "Dashboard", products: "Products", categories: "Categories", orders: "Orders", customers: "Customers", messages: unreadCount > 0 ? `Messages (${unreadCount})` : "Messages", settings: "Settings", home: "Home Page" };
 
   app.innerHTML = `
     <section class="panel admin-panel">
@@ -3435,6 +3772,7 @@ async function renderAdmin(params) {
     if (tab === "categories") renderCategoriesTab(adminContent, categories, reload);
     if (tab === "orders") renderOrdersTab(adminContent, orders, reload);
     if (tab === "customers") renderCustomersTab(adminContent, customers, reload);
+    if (tab === "messages") renderMessagesTab(adminContent, messages, reload);
     if (tab === "settings") renderSettingsTab(adminContent, settings, reload);
     if (tab === "home") renderHomeTab(adminContent, settings, reload);
   }
@@ -3459,6 +3797,106 @@ async function bootstrapAuthState() {
   await loadMe();
   await Promise.all([loadCart(), loadFavorites()]);
   updateHeader();
+}
+
+function renderTerms() {
+  updatePageMeta({ title: "Terms of Service" });
+  app.innerHTML = `
+    <div class="policy-page">
+      <h1 class="policy-title">Terms of Service</h1>
+      <p class="policy-updated">Last updated: April 27, 2026</p>
+
+      <section class="policy-section">
+        <h2>1. Acceptance of Terms</h2>
+        <p>By accessing or using Contact_Lens, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>2. Products and Ordering</h2>
+        <p>All contact lenses sold on this site are for use by individuals with a valid prescription. You are responsible for ensuring that the products you order are suitable for your prescription and eye health needs. We reserve the right to refuse or cancel orders at our discretion.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>3. Pricing and Payment</h2>
+        <p>All prices are displayed in Japanese Yen (¥) and include consumption tax. We accept payment via credit/debit card (Stripe) and cash on delivery. Payment must be completed before shipment.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>4. Shipping</h2>
+        <p>We ship within Japan. Orders over ¥10,000 qualify for free shipping; a flat shipping fee of ¥550 applies to orders below that amount. Estimated delivery is 2–5 business days after dispatch. We are not responsible for delays caused by carriers or events outside our control.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>5. Intellectual Property</h2>
+        <p>All content on this site — including text, images, logos, and design — is the property of Contact_Lens and may not be reproduced without written permission.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>6. Limitation of Liability</h2>
+        <p>Contact_Lens is not liable for any indirect, incidental, or consequential damages arising from the use of our products or services. Our total liability is limited to the amount you paid for the relevant order.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>7. Privacy</h2>
+        <p>We collect and store personal information necessary to fulfil your orders and communicate with you. We do not sell your data to third parties. By using our service you consent to this use of your data.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>8. Changes to Terms</h2>
+        <p>We may update these terms at any time. Continued use of the site after changes constitutes acceptance of the new terms.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>9. Contact</h2>
+        <p>For questions about these terms, please <a href="#/contact">contact us</a>.</p>
+      </section>
+    </div>
+  `;
+}
+
+function renderReturns() {
+  updatePageMeta({ title: "Return Policy" });
+  app.innerHTML = `
+    <div class="policy-page">
+      <h1 class="policy-title">Return &amp; Refund Policy</h1>
+      <p class="policy-updated">Last updated: April 27, 2026</p>
+
+      <section class="policy-section">
+        <h2>Eligibility for Returns</h2>
+        <p>We accept returns within <strong>14 days</strong> of delivery for items that are:</p>
+        <ul>
+          <li>Unopened and in their original sealed packaging</li>
+          <li>Undamaged and free from signs of use</li>
+          <li>Accompanied by the original order number</li>
+        </ul>
+        <p>For hygiene and safety reasons, <strong>opened or used contact lenses cannot be returned</strong> unless they are defective or were delivered incorrectly.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>Defective or Incorrect Items</h2>
+        <p>If you receive a defective product or an item different from what you ordered, please contact us within 7 days of delivery. We will arrange a full replacement or refund at no additional cost to you.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>How to Request a Return</h2>
+        <ol>
+          <li>Contact us via the <a href="#/contact">Contact page</a> with your order number and reason for return.</li>
+          <li>We will reply within 1–2 business days with instructions.</li>
+          <li>Ship the item(s) back using a tracked service. Return shipping costs are the customer's responsibility unless the item is defective or incorrect.</li>
+        </ol>
+      </section>
+
+      <section class="policy-section">
+        <h2>Refunds</h2>
+        <p>Once we receive and inspect the returned item(s), we will process a refund to your original payment method within 5–10 business days. Shipping fees are non-refundable unless the return is due to our error.</p>
+      </section>
+
+      <section class="policy-section">
+        <h2>Questions?</h2>
+        <p>Please <a href="#/contact">contact our support team</a> — we're happy to help.</p>
+      </section>
+    </div>
+  `;
 }
 
 async function route() {
@@ -3530,6 +3968,14 @@ async function route() {
   }
   if (path === "/admin") {
     await renderAdmin(params);
+    return;
+  }
+  if (path === "/terms") {
+    renderTerms();
+    return;
+  }
+  if (path === "/returns") {
+    renderReturns();
     return;
   }
 
@@ -3612,6 +4058,36 @@ window.addEventListener("hashchange", () => {
     app.innerHTML = `<div class="empty-state">Something went wrong while rendering the page.</div>`;
   });
 });
+
+/* ── Mobile bottom navigation bar ───────────────────────── */
+const mbnHome    = document.getElementById("mbn-home");
+const mbnShop    = document.getElementById("mbn-shop");
+const mbnCartTab = document.getElementById("mbn-cart-tab");
+const mbnAccount = document.getElementById("mbn-account");
+const mbnCartCount = document.getElementById("mbn-cart-count");
+
+function updateBottomNav() {
+  const count = state.cart.reduce((s, i) => s + i.quantity, 0);
+  if (mbnCartCount) {
+    mbnCartCount.textContent = count;
+    mbnCartCount.classList.toggle("hidden", count === 0);
+  }
+
+  if (mbnAccount) {
+    mbnAccount.href = state.me ? "#/profile" : "#/login";
+  }
+
+  const { path } = getHashRoute();
+  const tabs = [
+    { el: mbnHome,    matches: (p) => p === "/" || p === "" },
+    { el: mbnShop,    matches: (p) => p.startsWith("/shop") || p.startsWith("/product") },
+    { el: mbnCartTab, matches: (p) => p === "/cart" || p === "/checkout" },
+    { el: mbnAccount, matches: (p) => p === "/profile" || p === "/orders" || p === "/favorites" || p === "/register" || p === "/login" },
+  ];
+  tabs.forEach(({ el, matches }) => el?.classList.toggle("active", matches(path)));
+}
+
+window.addEventListener("hashchange", updateBottomNav);
 
 route().catch((error) => {
   console.error(error);

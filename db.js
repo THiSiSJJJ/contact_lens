@@ -125,143 +125,213 @@ const categorySeeds = [
 
 const productSeeds = [
   {
-    brand: "Samansa Mos2",
+    brand: "Johnson & Johnson",
     category_slug: "daily",
-    colors: ["ivory", "floral"],
-    description: "A soft cotton dress with a scattered floral print and an easy, natural silhouette.",
+    colors: ["clear"],
+    description: "Daily disposable lenses with HydraLuxe Technology for all-day moisture and comfort. UV-blocking protection included. Box of 30.",
     discount_price: null,
     featured: 1,
     images: [
-      { alt_text: "Shirring floral dress front", image_url: "/uploads/seed-dress-1.svg", sort_order: 1 },
-      { alt_text: "Shirring floral dress detail", image_url: "/uploads/seed-dress-2.svg", sort_order: 2 },
+      { alt_text: "Acuvue Oasys 1-Day box front", image_url: "/uploads/seed-lens-daily-1.svg", sort_order: 1 },
+      { alt_text: "Acuvue Oasys 1-Day lens detail", image_url: "/uploads/seed-lens-daily-2.svg", sort_order: 2 },
     ],
     is_published: 1,
-    name: "Shirring Floral Dress",
-    price: 4950,
-    sizes: ["F"],
-    slug: "shirring-floral-onepiece",
-    stock_quantity: 12,
+    name: "Acuvue Oasys 1-Day",
+    price: 2980,
+    sizes: ["-1.00", "-1.50", "-2.00", "-2.50", "-3.00", "-3.50", "-4.00", "-4.50", "-5.00", "-5.50", "-6.00"],
+    slug: "acuvue-oasys-1-day-30",
+    stock_quantity: 50,
   },
   {
-    brand: "Samansa Mos2 Lagom",
+    brand: "Alcon",
+    category_slug: "daily",
+    colors: ["clear"],
+    description: "Water gradient daily lenses with approximately 80% water content at the surface for exceptional breathability and comfort. Box of 30.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "Dailies Total1 box", image_url: "/uploads/seed-lens-daily-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Dailies Total1",
+    price: 3480,
+    sizes: ["-0.50", "-1.00", "-1.50", "-2.00", "-2.50", "-3.00", "-4.00", "-5.00", "-6.00"],
+    slug: "dailies-total1-30",
+    stock_quantity: 35,
+  },
+  {
+    brand: "CooperVision",
     category_slug: "monthly",
-    colors: ["white", "flower"],
-    description: "A light blouse finished with delicate floral embroidery and a soft drape.",
+    colors: ["clear"],
+    description: "Monthly silicone hydrogel lenses with Aquaform Technology for exceptional oxygen transmission and natural wettability throughout the month. Box of 6.",
     discount_price: null,
     featured: 1,
     images: [
-      { alt_text: "Flower embroidered blouse front", image_url: "/uploads/seed-blouse-1.svg", sort_order: 1 },
-      { alt_text: "Flower embroidered blouse alternate view", image_url: "/uploads/seed-blouse-2.svg", sort_order: 2 },
+      { alt_text: "Biofinity box", image_url: "/uploads/seed-lens-monthly-1.svg", sort_order: 1 },
     ],
     is_published: 1,
-    name: "Flower Embroidered Blouse",
-    price: 4290,
-    sizes: ["F"],
-    slug: "flower-embroidered-blouse",
-    stock_quantity: 8,
+    name: "Biofinity",
+    price: 3280,
+    sizes: ["-1.00", "-2.00", "-3.00", "-4.00", "-5.00", "-6.00", "-8.00"],
+    slug: "biofinity-6pack",
+    stock_quantity: 40,
   },
   {
-    brand: "Samansa Mos2",
+    brand: "Alcon",
+    category_slug: "monthly",
+    colors: ["clear"],
+    description: "Extended wear monthly lenses with SMARTSHIELD Technology for lasting moisture and deposit resistance over 30 days. Box of 6.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "Air Optix Plus HydraGlyde box", image_url: "/uploads/seed-lens-monthly-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Air Optix Plus HydraGlyde",
+    price: 2980,
+    sizes: ["-0.50", "-1.00", "-2.00", "-3.00", "-4.00", "-5.00", "-6.00"],
+    slug: "air-optix-plus-hydraglyde-6pack",
+    stock_quantity: 45,
+  },
+  {
+    brand: "Alcon",
     category_slug: "colored",
-    colors: ["beige"],
-    description: "Everyday sport sandals in a soft beige tone with a light and comfortable fit.",
-    discount_price: null,
-    featured: 0,
-    images: [
-      { alt_text: "Sport sandal sneaker", image_url: "/uploads/seed-sandals-1.svg", sort_order: 1 },
-    ],
-    is_published: 1,
-    name: "Sport Sandal Sneaker",
-    price: 5390,
-    sizes: ["M", "L"],
-    slug: "sport-sandal-sneaker",
-    stock_quantity: 10,
-  },
-  {
-    brand: "Te chichi",
-    category_slug: "toric",
-    colors: ["gray"],
-    description: "An elegant braided hat with a polished silhouette for warm-weather styling.",
-    discount_price: null,
-    featured: 0,
-    images: [
-      { alt_text: "Braided hat", image_url: "/uploads/seed-hat-1.svg", sort_order: 1 },
-    ],
-    is_published: 1,
-    name: "Braided Hat",
-    price: 6600,
-    sizes: ["F"],
-    slug: "braid-hat",
-    stock_quantity: 4,
-  },
-  {
-    brand: "Samansa Mos2",
-    category_slug: "solutions",
-    colors: ["greige"],
-    description: "A relaxed half-sleeve jacket designed for easy layering with a soft tailored look.",
-    discount_price: 6237,
+    colors: ["gray", "green", "blue", "brown", "amethyst", "honey", "turquoise"],
+    description: "Three-in-one color technology naturally blends with your eye color for a vibrant, realistic look. 1-month wear. Pack of 2.",
+    discount_price: 1980,
     featured: 1,
     images: [
-      { alt_text: "Double-button half-sleeve jacket", image_url: "/uploads/seed-jacket-1.svg", sort_order: 1 },
+      { alt_text: "FreshLook Colorblends pack", image_url: "/uploads/seed-lens-colored-1.svg", sort_order: 1 },
     ],
     is_published: 1,
-    name: "Double-Button Half-Sleeve Jacket",
-    price: 6930,
-    sizes: ["F"],
-    slug: "double-button-half-sleeve-jacket",
-    stock_quantity: 6,
+    name: "FreshLook Colorblends",
+    price: 2480,
+    sizes: ["Plano", "-1.00", "-2.00", "-3.00", "-4.00", "-5.00", "-6.00"],
+    slug: "freshlook-colorblends-2pack",
+    stock_quantity: 60,
   },
   {
-    brand: "Samansa Mos2",
-    category_slug: "accessories",
-    colors: ["natural"],
-    description: "A softly scented diffuser that blends naturally into calm everyday interiors.",
+    brand: "Johnson & Johnson",
+    category_slug: "colored",
+    colors: ["natural shine", "vivid style", "fresh look"],
+    description: "Daily disposable color-enhancing lenses featuring a limbal ring design that defines and accentuates your natural eye color. Box of 30.",
     discount_price: null,
     featured: 0,
     images: [
-      { alt_text: "Aroma diffuser", image_url: "/uploads/seed-diffuser-1.svg", sort_order: 1 },
+      { alt_text: "Acuvue Define Natural Shine box", image_url: "/uploads/seed-lens-colored-1.svg", sort_order: 1 },
     ],
     is_published: 1,
-    name: "Aroma Diffuser",
-    price: 4290,
-    sizes: ["F"],
-    slug: "aroma-diffuser",
+    name: "Acuvue Define Natural Shine",
+    price: 3980,
+    sizes: ["Plano", "-1.00", "-2.00", "-3.00", "-4.00", "-5.00", "-6.00"],
+    slug: "acuvue-define-natural-shine-30",
+    stock_quantity: 25,
+  },
+  {
+    brand: "Johnson & Johnson",
+    category_slug: "toric",
+    colors: ["clear"],
+    description: "Bi-weekly toric lenses for astigmatism with HYDRACLEAR Plus technology. Blink-activated stabilization keeps lenses in the correct position for consistent, clear vision. Box of 6.",
+    discount_price: null,
+    featured: 1,
+    images: [
+      { alt_text: "Acuvue Oasys for Astigmatism box", image_url: "/uploads/seed-lens-toric-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Acuvue Oasys for Astigmatism",
+    price: 4280,
+    sizes: ["-0.75 cyl", "-1.25 cyl", "-1.75 cyl", "-2.25 cyl"],
+    slug: "acuvue-oasys-astigmatism-6pack",
+    stock_quantity: 30,
+  },
+  {
+    brand: "Alcon",
+    category_slug: "solutions",
+    colors: [],
+    description: "Multi-purpose disinfecting solution that cleans, conditions, removes protein, and stores all types of soft contact lenses. 300ml.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "Opti-Free Puremoist bottle", image_url: "/uploads/seed-solution-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Opti-Free Puremoist",
+    price: 1480,
+    sizes: ["300ml"],
+    slug: "opti-free-puremoist-300ml",
+    stock_quantity: 80,
+  },
+  {
+    brand: "Bausch + Lomb",
+    category_slug: "solutions",
+    colors: [],
+    description: "No-rub multipurpose solution that effectively cleans, disinfects, and conditions soft contact lenses for comfortable all-day wear. 360ml.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "ReNu Advanced Formula bottle", image_url: "/uploads/seed-solution-2.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "ReNu Advanced Formula",
+    price: 1280,
+    sizes: ["360ml"],
+    slug: "renu-advanced-formula-360ml",
+    stock_quantity: 70,
+  },
+  {
+    brand: "Rohto",
+    category_slug: "accessories",
+    colors: [],
+    description: "Preservative-free eye drops formulated for contact lens wearers. Relieves dryness and refreshes eyes throughout the day. 13ml.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "Rohto C3 Eye Drops bottle", image_url: "/uploads/seed-drops-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Rohto C3 Eye Drops",
+    price: 880,
+    sizes: ["13ml"],
+    slug: "rohto-c3-eye-drops-13ml",
+    stock_quantity: 100,
+  },
+  {
+    brand: "Generic",
+    category_slug: "accessories",
+    colors: ["white", "blue", "pink"],
+    description: "Durable lens storage cases with flat-cap sealing to prevent leaks. Compatible with all standard contact lens types. Pack of 2.",
+    discount_price: null,
+    featured: 0,
+    images: [
+      { alt_text: "Lens case twin pack", image_url: "/uploads/seed-case-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Lens Case Twin Pack",
+    price: 480,
+    sizes: ["Standard"],
+    slug: "lens-case-twin-pack",
+    stock_quantity: 200,
+  },
+  {
+    brand: "CooperVision",
+    category_slug: "feature-edit",
+    colors: ["clear"],
+    description: "Premium monthly multifocal lenses for presbyopia. Balanced Progressive Technology delivers clear vision at near, intermediate, and far distances. Box of 6.",
+    discount_price: null,
+    featured: 1,
+    images: [
+      { alt_text: "Biofinity Multifocal box", image_url: "/uploads/seed-multifocal-1.svg", sort_order: 1 },
+    ],
+    is_published: 1,
+    name: "Biofinity Multifocal",
+    price: 5480,
+    sizes: ["+1.00", "+2.00", "+3.00", "-1.00", "-2.00", "-3.00"],
+    slug: "biofinity-multifocal-6pack",
     stock_quantity: 20,
   },
 ];
 
-const legacyProductFixes = [
-  {
-    slug: "linen-tiered-onepiece",
-    category_slug: "daily",
-    brand: "Samansa Mos2",
-    name: "Linen Tiered Dress",
-    description: "A relaxed linen-blend dress with a tiered shape and natural texture.",
-    price: 6490,
-    discount_price: null,
-    stock_quantity: 6,
-    featured: 0,
-    is_published: 1,
-    colors: ["linen", "natural"],
-    sizes: ["F"],
-    images: [{ image_url: "/uploads/seed-dress-1.svg", alt_text: "Linen tiered dress", sort_order: 1 }],
-  },
-  {
-    slug: "cotton-gather-blouse",
-    category_slug: "feature-edit",
-    brand: "Samansa Mos2",
-    name: "Cotton Gather Blouse",
-    description: "A light gathered blouse in washed cotton for an airy everyday fit.",
-    price: 5390,
-    discount_price: null,
-    stock_quantity: 5,
-    featured: 1,
-    is_published: 1,
-    colors: ["soft white"],
-    sizes: ["F"],
-    images: [{ image_url: "/uploads/seed-blouse-1.svg", alt_text: "Cotton gather blouse", sort_order: 1 }],
-  },
-];
+const legacyProductFixes = [];
 
 async function ensureDirectories() {
   const uploadsDir = path.join(__dirname, "public", "uploads");
@@ -276,14 +346,16 @@ async function ensureDirectories() {
 async function seedPlaceholderImages() {
   const uploadsDir = path.join(__dirname, "public", "uploads");
   const placeholders = {
-    "seed-dress-1.svg": "#eadfd6",
-    "seed-dress-2.svg": "#e8ddd1",
-    "seed-blouse-1.svg": "#eff0e7",
-    "seed-blouse-2.svg": "#dae3f1",
-    "seed-sandals-1.svg": "#ddd6ca",
-    "seed-hat-1.svg": "#8f8f8f",
-    "seed-jacket-1.svg": "#ebe4dc",
-    "seed-diffuser-1.svg": "#eadfcd",
+    "seed-lens-daily-1.svg": "#d4e9f7",
+    "seed-lens-daily-2.svg": "#c8dff0",
+    "seed-lens-monthly-1.svg": "#c5e1db",
+    "seed-lens-colored-1.svg": "#f5d9c0",
+    "seed-lens-toric-1.svg": "#ddd4f0",
+    "seed-solution-1.svg": "#e2e8ed",
+    "seed-solution-2.svg": "#d8e4eb",
+    "seed-drops-1.svg": "#d4eeda",
+    "seed-case-1.svg": "#e8ddd0",
+    "seed-multifocal-1.svg": "#b8d8d8",
   };
 
   for (const [filename, fill] of Object.entries(placeholders)) {
@@ -396,15 +468,32 @@ async function normalizeSeedContent() {
     await upsertSeedCategory(category);
   }
 
-  for (const product of productSeeds) {
-    await upsertSeedProduct(product);
+  // Remove old clothing placeholder products that are no longer part of the seed
+  const legacyClothingSlugs = [
+    "shirring-floral-onepiece",
+    "flower-embroidered-blouse",
+    "sport-sandal-sneaker",
+    "braid-hat",
+    "double-button-half-sleeve-jacket",
+    "aroma-diffuser",
+    "linen-tiered-onepiece",
+    "cotton-gather-blouse",
+  ];
+  for (const slug of legacyClothingSlugs) {
+    const product = await get("SELECT id FROM products WHERE slug = ?", [slug]);
+    if (product) {
+      const inOrders = await get("SELECT id FROM order_items WHERE product_id = ? LIMIT 1", [product.id]);
+      if (!inOrders) {
+        await run("DELETE FROM product_images WHERE product_id = ?", [product.id]);
+        await run("DELETE FROM products WHERE id = ?", [product.id]);
+      } else {
+        await run("UPDATE products SET is_published = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [product.id]);
+      }
+    }
   }
 
-  for (const product of legacyProductFixes) {
-    const existing = await get("SELECT id FROM products WHERE slug = ?", [product.slug]);
-    if (existing) {
-      await upsertSeedProduct(product);
-    }
+  for (const product of productSeeds) {
+    await upsertSeedProduct(product);
   }
 
   const sampleCustomer = await get("SELECT id FROM users WHERE email = ?", ["customer@can-shop.local"]);
@@ -595,11 +684,36 @@ async function initializeDatabase() {
   await ensureColumn("orders", "payment_intent_id", "TEXT");
   await ensureColumn("orders", "stripe_checkout_session_id", "TEXT");
   await ensureColumn("orders", "stock_reduced_at", "TEXT");
+  await ensureColumn("orders", "tracking_number", "TEXT");
   await ensureColumn("orders", "updated_at", "TEXT");
   await run("UPDATE orders SET updated_at = COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)");
   await run(
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_stripe_checkout_session_id ON orders(stripe_checkout_session_id)",
   );
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS contact_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      subject TEXT NOT NULL DEFAULT '',
+      message TEXT NOT NULL,
+      read_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await ensureColumn("contact_messages", "user_id", "INTEGER REFERENCES users(id) ON DELETE SET NULL");
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS message_replies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      message_id INTEGER NOT NULL,
+      sender TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(message_id) REFERENCES contact_messages(id) ON DELETE CASCADE
+    )
+  `);
 
   await run(`
     CREATE TABLE IF NOT EXISTS order_items (
