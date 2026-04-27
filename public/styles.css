@@ -3725,7 +3725,7 @@ img[src=""] { opacity: 0; }
    HEADER — ACTIVE NAV LINK INDICATOR
    ═══════════════════════════════════════════════════════════ */
 .main-nav a.nav-active {
-  color: var(--teal);
+  color: #fff;
   font-weight: 700;
   position: relative;
 }
@@ -3734,7 +3734,7 @@ img[src=""] { opacity: 0; }
   position: absolute;
   bottom: -4px; left: 0; right: 0;
   height: 2px;
-  background: var(--teal);
+  background: rgba(255,255,255,0.8);
   border-radius: 2px;
 }
 
