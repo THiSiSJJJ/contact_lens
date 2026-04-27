@@ -659,8 +659,8 @@ async function loadCategories() {
 
 function populateNavCategories() {
   const cats = state.categories;
-  function makeLinks() {
-    return cats.map((cat) => {
+  function makeLinks(limit) {
+    return cats.slice(0, limit).map((cat) => {
       const a = document.createElement("a");
       a.href = `#/shop?category=${cat.slug}`;
       a.className = "nav-cat-link";
@@ -671,12 +671,12 @@ function populateNavCategories() {
   const desktopSlot = document.getElementById("nav-cats");
   if (desktopSlot) {
     desktopSlot.innerHTML = "";
-    makeLinks().forEach((a) => desktopSlot.appendChild(a));
+    makeLinks(2).forEach((a) => desktopSlot.appendChild(a));
   }
   const mobileSlot = document.getElementById("mobile-nav-cats");
   if (mobileSlot) {
     mobileSlot.innerHTML = "";
-    makeLinks().forEach((a) => mobileSlot.appendChild(a));
+    makeLinks(cats.length).forEach((a) => mobileSlot.appendChild(a));
   }
 }
 
