@@ -509,8 +509,9 @@ function cardMarkup(product) {
       <div class="product-card-image">
         <a href="#/product/${product.slug}" class="product-card-image-link">
           ${primaryImage
-            ? `<img src="${primaryImage}" alt="${escapeHtml(product.name)}" />`
+            ? `<img src="${primaryImage}" alt="${escapeHtml(product.name)}" loading="lazy" />`
             : `<span class="product-card-placeholder"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="72" height="72"><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(15,170,181,0.22)" stroke-width="5"/><circle cx="48" cy="48" r="25" fill="none" stroke="rgba(15,170,181,0.32)" stroke-width="3"/><circle cx="48" cy="48" r="10" fill="rgba(15,170,181,0.18)"/><ellipse cx="36" cy="33" rx="8" ry="5" fill="rgba(255,255,255,0.55)" transform="rotate(-35 36 33)"/></svg></span>`}
+
         </a>
         ${hasSale ? `<span class="product-badge sale-badge">${t("product.sale")}</span>` : ""}
         ${outOfStock ? `<span class="product-badge sold-out-badge">${t("product.soldOut")}</span>` : ""}
@@ -794,7 +795,14 @@ async function renderShop(params) {
       </select>
       <button class="button shop-filter-btn" type="submit">${t("shop.applyFilters")}</button>
     </form>
-    <section class="product-grid">${products.map(cardMarkup).join("")}</section>
+    ${products.length
+      ? `<section class="product-grid">${products.map(cardMarkup).join("")}</section>`
+      : `<div class="shop-empty-state">
+           <div class="shop-empty-icon">◉</div>
+           <h3>No products found</h3>
+           <p class="muted">Try a different search term or category.</p>
+           <a href="#/shop" class="button">Clear filters</a>
+         </div>`}
   `;
 
   function applyShopFilters() {
@@ -848,7 +856,7 @@ async function renderProduct(path) {
     <section class="detail-layout">
       <div class="detail-gallery">
         ${product.images.length
-          ? product.images.map((img) => `<figure class="detail-fig"><img src="${img.imageUrl}" alt="${escapeHtml(img.altText || product.name)}" /></figure>`).join("")
+          ? product.images.map((img) => `<figure class="detail-fig"><img src="${img.imageUrl}" alt="${escapeHtml(img.altText || product.name)}" loading="lazy" /></figure>`).join("")
           : `<div class="detail-fig detail-fig-empty">No image</div>`}
       </div>
 
@@ -1636,7 +1644,7 @@ async function renderProfile() {
         <div class="profile-addresses">
           ${profile.addresses.length
             ? profile.addresses.map((a) => `
-                <div class="address-card">
+                <div class="address-card" data-address-id="${a.id}">
                   <div class="address-card-icon">📍</div>
                   <div class="address-card-body">
                     <strong>${escapeHtml(a.full_name)}</strong>
@@ -1644,9 +1652,34 @@ async function renderProfile() {
                     <span>${escapeHtml(a.address_line1)}${a.address_line2 ? ", " + escapeHtml(a.address_line2) : ""}</span>
                     <span class="address-phone">📞 ${escapeHtml(a.phone)}</span>
                   </div>
+                  <button class="address-delete-btn" data-delete-address="${a.id}" title="Remove address">✕</button>
                 </div>`).join("")
             : `<div class="profile-empty">No saved addresses yet. They're saved automatically at checkout.</div>`}
         </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-head">
+          <h2>Account Settings</h2>
+          <span class="profile-section-sub">Update your name or password</span>
+        </div>
+        <form id="account-settings-form" class="profile-settings-form">
+          <div class="profile-settings-field">
+            <label for="settings-name">Display name</label>
+            <input id="settings-name" name="name" type="text" value="${escapeHtml(profile.user.name)}" placeholder="Your name" />
+          </div>
+          ${profile.user.provider === "local" ? `
+          <div class="profile-settings-field">
+            <label for="settings-current-pw">Current password</label>
+            <input id="settings-current-pw" name="currentPassword" type="password" placeholder="Required to change password" autocomplete="current-password" />
+          </div>
+          <div class="profile-settings-field">
+            <label for="settings-new-pw">New password</label>
+            <input id="settings-new-pw" name="newPassword" type="password" placeholder="Leave blank to keep current" autocomplete="new-password" />
+          </div>` : ""}
+          <div id="settings-result" style="min-height:18px;font-size:0.9rem;"></div>
+          <button class="button" type="submit" id="settings-submit-btn">Save changes</button>
+        </form>
       </div>
 
       <div id="profile-messages-section"></div>
@@ -1660,6 +1693,70 @@ async function renderProfile() {
     await bootstrapAuthState();
     location.hash = "#/";
   });
+
+  document.querySelectorAll("[data-delete-address]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const res = await api(`/api/addresses/${btn.dataset.deleteAddress}`, { method: "DELETE" });
+      if (res.ok) {
+        btn.closest(".address-card").remove();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || "Could not remove address.");
+        btn.disabled = false;
+      }
+    });
+  });
+
+  const settingsForm = document.querySelector("#account-settings-form");
+  const settingsResult = document.querySelector("#settings-result");
+  const settingsBtn = document.querySelector("#settings-submit-btn");
+  if (settingsForm) {
+    settingsForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      settingsBtn.disabled = true;
+      settingsBtn.textContent = "Saving…";
+      settingsResult.textContent = "";
+      const fd = new FormData(settingsForm);
+      const payload = {};
+      const newName = fd.get("name")?.trim();
+      const currentPassword = fd.get("currentPassword")?.trim();
+      const newPassword = fd.get("newPassword")?.trim();
+      if (newName && newName !== profile.user.name) payload.name = newName;
+      if (newPassword) { payload.currentPassword = currentPassword; payload.newPassword = newPassword; }
+      if (!Object.keys(payload).length) {
+        settingsResult.textContent = "No changes to save.";
+        settingsBtn.disabled = false;
+        settingsBtn.textContent = "Save changes";
+        return;
+      }
+      try {
+        const res = await api("/api/me", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          settingsResult.className = "error";
+          settingsResult.textContent = data.error || "Could not save changes.";
+          return;
+        }
+        state.me = data.user;
+        updateHeader();
+        settingsResult.className = "success";
+        settingsResult.textContent = "Changes saved.";
+        settingsForm.querySelector("[name='currentPassword']")?.replaceWith((() => { const i = document.createElement("input"); i.id = "settings-current-pw"; i.name = "currentPassword"; i.type = "password"; i.placeholder = "Required to change password"; i.autocomplete = "current-password"; return i; })());
+        settingsForm.querySelector("[name='newPassword']")?.replaceWith((() => { const i = document.createElement("input"); i.id = "settings-new-pw"; i.name = "newPassword"; i.type = "password"; i.placeholder = "Leave blank to keep current"; i.autocomplete = "new-password"; return i; })());
+      } catch (err) {
+        settingsResult.className = "error";
+        settingsResult.textContent = err.message || "Something went wrong.";
+      } finally {
+        settingsBtn.disabled = false;
+        settingsBtn.textContent = "Save changes";
+      }
+    });
+  }
 
   const messagesSection = document.querySelector("#profile-messages-section");
   const msgsRes = await api("/api/messages/my");
@@ -1769,6 +1866,15 @@ async function renderOrders() {
                   <a href="/api/orders/${order.id}/receipt?token=${encodeURIComponent(state.authToken)}" target="_blank" rel="noopener" class="ocn-receipt-btn">Receipt ↗</a>
                 </div>
                 ${order.tracking_number ? `<div class="ocn-tracking">📦 Tracking: <strong>${escapeHtml(order.tracking_number)}</strong></div>` : ""}
+                ${(order.items || []).length ? `
+                  <div class="ocn-items">
+                    ${order.items.map((item) => `
+                      <div class="ocn-item">
+                        <span class="ocn-item-name">${escapeHtml(item.product_name || item.name || "Product")}</span>
+                        <span class="ocn-item-qty muted">×${item.quantity}</span>
+                        <span class="ocn-item-price">${formatJPY(item.unit_price * item.quantity)}</span>
+                      </div>`).join("")}
+                  </div>` : ""}
               </article>`).join("")
           : `<div class="profile-empty" style="text-align:center;padding:60px 20px;">
                <div style="font-size:2.5rem;margin-bottom:12px;">📦</div>
@@ -1790,7 +1896,7 @@ function renderFavorites() {
     <section class="section-head">
       <div>
         <h2>Favorites</h2>
-        <p>Favorites</p>
+        <p>${state.favorites.length} saved item${state.favorites.length !== 1 ? "s" : ""}</p>
       </div>
     </section>
     <section class="product-grid">

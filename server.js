@@ -1398,6 +1398,47 @@ app.get("/api/me", requireAuth, async (request, response) => {
   response.json({ user: request.auth.user });
 });
 
+app.patch("/api/me", requireAuth, async (request, response, next) => {
+  const { name, currentPassword, newPassword } = request.body || {};
+  try {
+    const user = await get("SELECT * FROM users WHERE id = ?", [request.auth.user.id]);
+    const updates = {};
+
+    if (name?.trim()) updates.name = name.trim();
+
+    if (newPassword) {
+      if (user.provider !== "local") {
+        response.status(400).json({ error: "Password change is only available for email accounts." });
+        return;
+      }
+      if (!currentPassword || !verifyPassword(currentPassword, user.password_hash)) {
+        response.status(400).json({ error: "Current password is incorrect." });
+        return;
+      }
+      if (newPassword.length < 8) {
+        response.status(400).json({ error: "New password must be at least 8 characters." });
+        return;
+      }
+      updates.password_hash = hashPassword(newPassword);
+    }
+
+    if (!Object.keys(updates).length) {
+      response.status(400).json({ error: "Nothing to update." });
+      return;
+    }
+
+    const setClauses = Object.keys(updates).map((k) => `${k} = ?`).join(", ");
+    await run(
+      `UPDATE users SET ${setClauses}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [...Object.values(updates), request.auth.user.id],
+    );
+    const updated = await get("SELECT * FROM users WHERE id = ?", [request.auth.user.id]);
+    response.json({ user: sanitizeUser(updated) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/auth/google", (request, response, next) => {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
     response.status(503).send("Google OAuth is not configured.");
@@ -1857,6 +1898,22 @@ app.post("/api/addresses", requireAuth, async (request, response, next) => {
   }
 });
 
+app.delete("/api/addresses/:id", requireAuth, async (request, response, next) => {
+  try {
+    const result = await run(
+      "DELETE FROM addresses WHERE id = ? AND user_id = ?",
+      [request.params.id, request.auth.user.id],
+    );
+    if (result.changes === 0) {
+      response.status(404).json({ error: "Address not found." });
+      return;
+    }
+    response.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post("/api/checkout", requireAuth, async (request, response, next) => {
   const { addressId, paymentMethod = "card", shippingAddress } = request.body || {};
   const paymentConfig = PAYMENT_METHOD_CONFIG[paymentMethod];
@@ -1978,15 +2035,16 @@ app.post("/api/checkout/confirm-session", requireAuth, async (request, response,
 app.get("/api/orders/my", requireAuth, async (request, response, next) => {
   try {
     const rows = await all(
-      `
-        SELECT *
-        FROM orders
-        WHERE user_id = ?
-        ORDER BY created_at DESC, id DESC
-      `,
+      "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC, id DESC",
       [request.auth.user.id],
     );
-    response.json(rows);
+    const ordersWithItems = await Promise.all(
+      rows.map(async (order) => {
+        const items = await all("SELECT * FROM order_items WHERE order_id = ?", [order.id]);
+        return { ...order, items };
+      }),
+    );
+    response.json(ordersWithItems);
   } catch (error) {
     next(error);
   }
@@ -2695,8 +2753,16 @@ app.use((error, _request, response, _next) => {
   });
 });
 
+const BUILD_VERSION = Date.now().toString(36);
+const indexHtmlPath = path.join(publicDir, "index.html");
+
 app.get(/.*/, (_request, response) => {
-  response.sendFile(path.join(publicDir, "index.html"));
+  try {
+    const html = fs.readFileSync(indexHtmlPath, "utf8").replace(/\?v=[^"']*/g, `?v=${BUILD_VERSION}`);
+    response.type("html").send(html);
+  } catch {
+    response.sendFile(indexHtmlPath);
+  }
 });
 
 async function start() {

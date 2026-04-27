@@ -2373,14 +2373,49 @@ button, input, select, textarea { font: inherit; }
 .address-card {
   display: flex; gap: 14px; align-items: flex-start;
   padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  position: relative;
 }
 .address-card-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
-.address-card-body { display: flex; flex-direction: column; gap: 3px; }
+.address-card-body { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .address-card-body strong { font-size: 0.9rem; font-weight: 700; }
 .address-card-body span { font-size: 0.82rem; color: var(--muted); }
 .address-phone { color: var(--text) !important; font-weight: 500 !important; }
+.address-delete-btn {
+  flex-shrink: 0; width: 28px; height: 28px; border: none; background: transparent;
+  color: var(--muted); font-size: 0.85rem; cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.address-delete-btn:hover { background: #fdecea; color: var(--danger); }
+
+.profile-settings-form { display: flex; flex-direction: column; gap: 14px; max-width: 480px; }
+.profile-settings-field { display: flex; flex-direction: column; gap: 6px; }
+.profile-settings-field label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.profile-settings-field input {
+  padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); font-size: 0.93rem; transition: border-color 0.15s;
+}
+.profile-settings-field input:focus { outline: none; border-color: var(--teal); }
+
 .profile-empty { padding: 24px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; font-size: 0.88rem; }
 .profile-support-note { font-size: 0.85rem; color: var(--muted); text-align: center; padding-top: 8px; }
+
+/* shop no-results state */
+.shop-empty-state {
+  text-align: center; padding: 64px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.shop-empty-icon { font-size: 3rem; color: var(--line-strong); }
+.shop-empty-state h3 { margin: 0; font-size: 1.2rem; }
+
+/* order line items */
+.ocn-items {
+  display: flex; flex-direction: column; gap: 4px;
+  padding-top: 10px; border-top: 1px solid var(--line); margin-top: 6px;
+}
+.ocn-item { display: flex; gap: 8px; font-size: 0.82rem; align-items: baseline; }
+.ocn-item-name { flex: 1; color: var(--text); }
+.ocn-item-qty { flex-shrink: 0; }
+.ocn-item-price { flex-shrink: 0; font-weight: 600; }
 
 /* ═══════════════════════════════════════════════════════════
    ORDERS PAGE
