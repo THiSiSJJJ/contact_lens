@@ -575,6 +575,8 @@ async function initializeDatabase() {
     )
   `);
   await ensureColumn("categories", "description", "TEXT NOT NULL DEFAULT ''");
+  await ensureColumn("categories", "sort_order", "INTEGER NOT NULL DEFAULT 0");
+  await ensureColumn("categories", "name_mn", "TEXT NOT NULL DEFAULT ''");
 
   await run(`
     CREATE TABLE IF NOT EXISTS settings (

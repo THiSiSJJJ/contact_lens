@@ -2546,7 +2546,7 @@ app.put("/api/admin/categories/:id", requireAdmin, async (request, response, nex
 app.delete("/api/admin/categories/:id", requireAdmin, async (request, response, next) => {
   try {
     const id = Number(request.params.id);
-    const fallback = await get("SELECT id FROM categories WHERE id != ? ORDER BY sort_order ASC, id ASC LIMIT 1", [id]);
+    const fallback = await get("SELECT id FROM categories WHERE id != ? ORDER BY id ASC LIMIT 1", [id]);
     if (fallback) {
       await run("UPDATE products SET category_id = ? WHERE category_id = ?", [fallback.id, id]);
     } else {
@@ -2773,7 +2773,7 @@ app.use((error, _request, response, _next) => {
   console.error(error);
   response.status(500).json({
     error: "Something went wrong on the server.",
-    ...(process.env.NODE_ENV === "production" ? {} : { details: error.message }),
+    details: error.message,
   });
 });
 
