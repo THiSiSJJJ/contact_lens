@@ -217,6 +217,7 @@ function applyLang() {
   });
   const langBtn = document.getElementById("lang-toggle");
   if (langBtn) langBtn.textContent = currentLang === "en" ? "MN" : "EN";
+  if (state.categories.length) populateNavCategories();
 }
 /* ── end i18n ───────────────────────────────────────────── */
 
@@ -653,6 +654,30 @@ async function loadMe() {
 async function loadCategories() {
   const response = await fetch("/api/categories");
   state.categories = await response.json();
+  populateNavCategories();
+}
+
+function populateNavCategories() {
+  const cats = state.categories;
+  function makeLinks() {
+    return cats.map((cat) => {
+      const a = document.createElement("a");
+      a.href = `#/shop?category=${cat.slug}`;
+      a.className = "nav-cat-link";
+      a.textContent = currentLang === "mn" && cat.name_mn ? cat.name_mn : cat.name;
+      return a;
+    });
+  }
+  const desktopSlot = document.getElementById("nav-cats");
+  if (desktopSlot) {
+    desktopSlot.innerHTML = "";
+    makeLinks().forEach((a) => desktopSlot.appendChild(a));
+  }
+  const mobileSlot = document.getElementById("mobile-nav-cats");
+  if (mobileSlot) {
+    mobileSlot.innerHTML = "";
+    makeLinks().forEach((a) => mobileSlot.appendChild(a));
+  }
 }
 
 async function loadHome() {
@@ -4251,7 +4276,7 @@ async function route() {
 
   /* highlight active nav link — exact hash match only */
   const currentHash = location.hash;
-  document.querySelectorAll(".main-nav a").forEach((link) => {
+  document.querySelectorAll(".main-nav a, #nav-cats a").forEach((link) => {
     link.classList.toggle("nav-active", link.getAttribute("href") === currentHash);
   });
 
