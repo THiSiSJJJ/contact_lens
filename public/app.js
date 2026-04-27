@@ -575,19 +575,31 @@ function bindCardActions(root = document) {
         return;
       }
       const productId = Number(button.dataset.productId);
-      const exists = state.favorites.some((item) => item.id === productId);
-      if (exists) {
-        await api(`/api/favorites/${productId}`, { method: "DELETE" });
-      } else {
-        await api("/api/favorites", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productId }),
-        });
+      const wasFavorited = state.favorites.some((item) => item.id === productId);
+      /* optimistic update */
+      button.classList.toggle("favorited", !wasFavorited);
+      button.textContent = wasFavorited ? "♡" : "♥";
+      button.disabled = true;
+      try {
+        if (wasFavorited) {
+          await api(`/api/favorites/${productId}`, { method: "DELETE" });
+        } else {
+          await api("/api/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId }),
+          });
+        }
+        await loadFavorites();
+        updateHeader();
+      } catch {
+        /* revert on error */
+        button.classList.toggle("favorited", wasFavorited);
+        button.textContent = wasFavorited ? "♥" : "♡";
+        showToast("Could not update favorites.", "error");
+      } finally {
+        button.disabled = false;
       }
-      await loadFavorites();
-      updateHeader();
-      route();
     });
   });
 
@@ -810,8 +822,21 @@ async function renderShop(params) {
   if (category) query.set("category", category);
   if (sort) query.set("sort", sort);
 
-  const response = await fetch(`/api/products?${query.toString()}`);
-  const products = await response.json();
+  let products;
+  try {
+    const response = await fetch(`/api/products?${query.toString()}`);
+    products = await response.json();
+    if (!Array.isArray(products)) throw new Error("bad response");
+  } catch {
+    app.innerHTML = `<div class="not-found-page">
+      <div class="not-found-lens" style="font-size:3rem;opacity:0.2;">◉</div>
+      <h2 class="not-found-title">Could not load products</h2>
+      <p class="not-found-sub">Check your connection and try again.</p>
+      <div class="not-found-links"><a href="#/shop" class="button btn-primary">Retry</a></div>
+    </div>`;
+    finishPageLoad();
+    return;
+  }
 
   app.innerHTML = `
     <div class="shop-page-head">
@@ -878,7 +903,19 @@ async function renderShop(params) {
 
 async function renderProduct(path) {
   const slug = path.split("/")[2];
-  const response = await fetch(`/api/products/${slug}`);
+  let response;
+  try {
+    response = await fetch(`/api/products/${slug}`);
+  } catch {
+    app.innerHTML = `<div class="not-found-page">
+      <div class="not-found-lens" style="font-size:3rem;opacity:0.2;">◉</div>
+      <h2 class="not-found-title">Connection error</h2>
+      <p class="not-found-sub">Could not load the product. Check your connection and try again.</p>
+      <div class="not-found-links"><a href="#/shop" class="button btn-primary">Back to shop</a></div>
+    </div>`;
+    finishPageLoad();
+    return;
+  }
   if (!response.ok) {
     app.innerHTML = `
       <div class="not-found-page">
@@ -923,7 +960,7 @@ async function renderProduct(path) {
 
   const galleryHtml = product.images.length
     ? `<div class="detail-main-img-wrap" id="detail-main-wrap">
-         <img id="detail-main-img" class="detail-main-img" src="${product.images[0].imageUrl}" alt="${escapeHtml(product.images[0].altText || product.name)}" loading="eager" />
+         <img id="detail-main-img" class="detail-main-img" src="${product.images[0].imageUrl}" alt="${escapeHtml(product.images[0].altText || product.name)}" loading="eager" onerror="this.style.opacity='0.15';this.src=''" />
          ${product.images.length > 1 ? `<button class="lightbox-trigger" id="lightbox-trigger" aria-label="Zoom image">⤢</button>` : ""}
        </div>
        ${product.images.length > 1 ? `
@@ -1171,8 +1208,16 @@ function renderCart() {
       </div>
     </div>`;
 
+  function lockCartButtons() {
+    app.querySelectorAll("[data-cart-dec],[data-cart-inc],[data-cart-remove]").forEach((b) => { b.disabled = true; });
+  }
+  function unlockCartButtons() {
+    app.querySelectorAll("[data-cart-dec],[data-cart-inc],[data-cart-remove]").forEach((b) => { b.disabled = false; });
+  }
+
   app.querySelectorAll("[data-cart-dec]").forEach((button) => {
     button.addEventListener("click", async () => {
+      lockCartButtons();
       const id = Number(button.dataset.cartDec);
       const item = state.cart.find((entry) => entry.id === id);
       await updateCartItemQuantity(id, Math.max(item.quantity - 1, 0));
@@ -1183,6 +1228,7 @@ function renderCart() {
 
   app.querySelectorAll("[data-cart-inc]").forEach((button) => {
     button.addEventListener("click", async () => {
+      lockCartButtons();
       const id = Number(button.dataset.cartInc);
       const item = state.cart.find((entry) => entry.id === id);
       await updateCartItemQuantity(id, item.quantity + 1);
@@ -1193,6 +1239,7 @@ function renderCart() {
 
   app.querySelectorAll("[data-cart-remove]").forEach((button) => {
     button.addEventListener("click", async () => {
+      lockCartButtons();
       await removeCartItem(button.dataset.cartRemove);
       updateHeader();
       renderCart();
@@ -1508,6 +1555,12 @@ async function renderRegister(params) {
     submitBtn.disabled = true;
     submitBtn.textContent = t("auth.creatingAccount");
     const fd = new FormData(form);
+    if ((fd.get("password") || "").length < 8) {
+      result.textContent = "Password must be at least 8 characters.";
+      submitBtn.disabled = false;
+      submitBtn.textContent = t("auth.createAccount");
+      return;
+    }
     if (fd.get("password") !== fd.get("confirmPassword")) {
       result.textContent = t("auth.passwordMismatch");
       submitBtn.disabled = false;
@@ -1984,8 +2037,24 @@ async function renderOrders() {
     location.hash = "#/login";
     return;
   }
-  const response = await api("/api/orders/my");
-  const orders = await response.json();
+  app.innerHTML = `<div class="orders-page"><div class="orders-page-head"><div><h1>Order History</h1><p class="muted">Loading…</p></div></div>
+    <div class="orders-list-new">${Array.from({length:3},()=>`<div class="skeleton-card" style="height:100px;border-radius:12px;"></div>`).join("")}</div></div>`;
+
+  let orders;
+  try {
+    const response = await api("/api/orders/my");
+    orders = await response.json();
+    if (!Array.isArray(orders)) throw new Error("bad response");
+  } catch {
+    app.innerHTML = `<div class="not-found-page">
+      <div class="not-found-lens" style="font-size:3rem;opacity:0.2;">📦</div>
+      <h2 class="not-found-title">Could not load orders</h2>
+      <p class="not-found-sub">Check your connection and try again.</p>
+      <div class="not-found-links"><a href="#/orders" class="button btn-primary">Retry</a></div>
+    </div>`;
+    finishPageLoad();
+    return;
+  }
   const orderStatusColor = { pending:"ostatus-amber", processing:"ostatus-blue", shipped:"ostatus-purple", completed:"ostatus-green", cancelled:"ostatus-red" };
   const paymentColor = { paid:"ostatus-green", unpaid:"ostatus-red", pending:"ostatus-amber", failed:"ostatus-red", refunded:"ostatus-gray" };
 
@@ -2035,6 +2104,7 @@ async function renderOrders() {
       </div>
     </div>
   `;
+  finishPageLoad();
 }
 
 function renderFavorites() {
@@ -4170,6 +4240,14 @@ async function route() {
   const progressBar = document.getElementById("progress-bar");
   if (progressBar) { progressBar.style.width = "40%"; progressBar.style.opacity = "1"; }
   app.innerHTML = `<div class="page-loading">Loading…</div>`;
+
+  /* highlight active nav link */
+  document.querySelectorAll(".main-nav a").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    const linkPath = href.replace(/^#/, "").split("?")[0];
+    const active = linkPath === path || (linkPath === "/shop" && path.startsWith("/shop"));
+    link.classList.toggle("nav-active", active);
+  });
 
   if (!state.home || !state.categories.length || !state.oauthConfig || !state.paymentConfig) {
     await Promise.all([loadHome(), loadCategories(), loadOAuthConfig(), loadPaymentConfig(), loadPublicSettings()]);
