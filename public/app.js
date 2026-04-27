@@ -3509,15 +3509,16 @@ function renderCategoriesTab(adminContent, categories, reload) {
   adminContent.querySelectorAll("[data-delete-category]").forEach((button) => {
     button.addEventListener("click", async () => {
       const name = button.dataset.categoryName;
-      if (!confirm(`Delete "${name}"?\n\nProducts will not be deleted, but they will lose this category.`)) return;
+      if (!confirm(`Delete "${name}"?\n\nProducts in this category will be moved to another category automatically.`)) return;
       button.disabled = true;
       const response = await api(`/api/admin/categories/${button.dataset.deleteCategory}`, { method: "DELETE" });
       if (response.ok) {
-        showToast(`Category "${name}" deleted.`);
+        showToast(`Category "${name}" deleted.`, "success");
+        await loadCategories();
         await reload();
       } else {
         const data = await response.json().catch(() => ({}));
-        showToast(data.error || "Could not delete category.");
+        showToast(data.error || "Could not delete category.", "error");
         button.disabled = false;
       }
     });
