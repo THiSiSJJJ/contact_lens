@@ -407,9 +407,9 @@ function finishPageLoad() {
     progressBar.style.width = "100%";
     setTimeout(() => { progressBar.style.opacity = "0"; progressBar.style.width = "0%"; }, 300);
   }
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { app.classList.add("page-ready"); });
-  });
+  app.classList.remove("page-ready");
+  void app.offsetWidth; /* force reflow so animation re-triggers */
+  app.classList.add("page-ready");
 }
 
 function skeletonGrid(count = 8) {
@@ -1428,6 +1428,7 @@ async function renderCheckout(params = new URLSearchParams()) {
       submitBtn.textContent = t("checkout.place");
     }
   });
+  finishPageLoad();
 }
 
 async function renderOrderConfirmation(params) {
@@ -1475,6 +1476,7 @@ async function renderOrderConfirmation(params) {
       </div>
     </section>
   `;
+  finishPageLoad();
 }
 
 async function renderRegister(params) {
@@ -1585,6 +1587,7 @@ async function renderRegister(params) {
       submitBtn.textContent = t("auth.createAccount");
     }
   });
+  finishPageLoad();
 }
 
 async function renderLogin(params) {
@@ -1719,6 +1722,7 @@ async function renderLogin(params) {
       result.textContent = data.message || "Reset link sent if that address is registered.";
     }
   });
+  finishPageLoad();
 }
 
 async function renderResetPassword(params) {
@@ -1765,6 +1769,7 @@ async function renderResetPassword(params) {
       }, 800);
     }
   });
+  finishPageLoad();
 }
 
 async function renderProfile() {
@@ -2029,6 +2034,7 @@ async function renderProfile() {
       }
     });
   });
+  finishPageLoad();
 }
 
 async function renderOrders() {
@@ -4110,6 +4116,7 @@ async function renderAdmin(params) {
   });
 
   switchTab(currentTab);
+  finishPageLoad();
 }
 
 function handleOauthCompletion(params) {
@@ -4180,6 +4187,7 @@ function renderTerms() {
       </section>
     </div>
   `;
+  finishPageLoad();
 }
 
 function renderReturns() {
@@ -4225,6 +4233,7 @@ function renderReturns() {
       </section>
     </div>
   `;
+  finishPageLoad();
 }
 
 async function route() {
@@ -4236,7 +4245,6 @@ async function route() {
   }
 
   window.scrollTo({ top: 0, behavior: "instant" });
-  app.classList.remove("page-ready");
   const progressBar = document.getElementById("progress-bar");
   if (progressBar) { progressBar.style.width = "40%"; progressBar.style.opacity = "1"; }
   app.innerHTML = `<div class="page-loading">Loading…</div>`;
@@ -4336,6 +4344,7 @@ async function route() {
         <a href="#/shop" class="button-secondary">Browse shop</a>
       </div>
     </div>`;
+  finishPageLoad();
 }
 
 searchForm.addEventListener("submit", (event) => {

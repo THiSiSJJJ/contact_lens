@@ -3377,12 +3377,13 @@ button, input, select, textarea { font: inherit; }
 /* ═══════════════════════════════════════════════════════════
    PAGE FADE TRANSITION
    ═══════════════════════════════════════════════════════════ */
-#app {
-  opacity: 0;
-  transition: opacity 0.2s ease;
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+#app { opacity: 1; }
 #app.page-ready {
-  opacity: 1;
+  animation: pageFadeIn 0.22s ease both;
 }
 
 /* ═══════════════════════════════════════════════════════════
