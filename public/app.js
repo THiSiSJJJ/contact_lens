@@ -387,17 +387,31 @@ function ensureToastHost() {
   return host;
 }
 
-function showToast(message) {
+function showToast(message, type = "info") {
   const host = ensureToastHost();
   const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
+  const icons = { success: "✓", error: "✕", info: "ℹ" };
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span class="toast-msg">${escapeHtml(String(message))}</span>`;
   host.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("visible"));
   window.setTimeout(() => {
     toast.classList.remove("visible");
     window.setTimeout(() => toast.remove(), 220);
-  }, 1800);
+  }, 2200);
+}
+
+function skeletonGrid(count = 8) {
+  return `<section class="product-grid">${Array.from({ length: count }, () => `
+    <div class="product-card skeleton-card">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line skeleton-line-sm"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line skeleton-line-md"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>`).join("")}</section>`;
 }
 
 async function fetchProductForCart(productId) {
@@ -441,12 +455,12 @@ async function syncGuestCartToServer() {
   state.guestCartSynced = true;
 }
 
-async function addProductToCart(productId) {
+async function addProductToCart(productId, quantity = 1) {
   if (state.me) {
     const response = await api("/api/cart/items", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, quantity: 1 }),
+      body: JSON.stringify({ productId, quantity }),
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -460,9 +474,9 @@ async function addProductToCart(productId) {
   const items = readGuestCart();
   const existing = items.find((item) => item.product.id === productId);
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity += quantity;
   } else {
-    items.unshift({ id: product.id, product, quantity: 1 });
+    items.unshift({ id: product.id, product, quantity });
   }
   writeGuestCart(items);
   state.cart = items;
@@ -498,11 +512,17 @@ async function removeCartItem(itemId) {
   state.cart = items;
 }
 
+function isNewProduct(product) {
+  if (!product.createdAt) return false;
+  return (Date.now() - new Date(product.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000;
+}
+
 function cardMarkup(product) {
   const primaryImage = product.images?.[0]?.imageUrl || "";
   const hasSale = product.discountPrice && product.discountPrice < product.price;
   const outOfStock = product.stockQuantity <= 0;
   const isFavorited = state.favorites.some((fav) => fav.id === product.id);
+  const isNew = isNewProduct(product);
 
   return `
     <article class="product-card">
@@ -514,6 +534,7 @@ function cardMarkup(product) {
 
         </a>
         ${hasSale ? `<span class="product-badge sale-badge">${t("product.sale")}</span>` : ""}
+        ${!hasSale && isNew ? `<span class="product-badge new-badge">NEW</span>` : ""}
         ${outOfStock ? `<span class="product-badge sold-out-badge">${t("product.soldOut")}</span>` : ""}
         <button class="product-fav-btn${isFavorited ? " favorited" : ""}" data-action="favorite" data-product-id="${product.id}" title="${isFavorited ? "Remove from favorites" : "Add to favorites"}">
           ${isFavorited ? "♥" : "♡"}
@@ -563,12 +584,16 @@ function bindCardActions(root = document) {
     button.addEventListener("click", async () => {
       try {
         button.disabled = true;
-        await addProductToCart(Number(button.dataset.productId));
+        const qty = Number(button.dataset.qty || 1);
+        await addProductToCart(Number(button.dataset.productId), qty);
         updateHeader();
-        showToast("Added to cart");
+        showToast("Added to cart", "success");
+        const badge = document.getElementById("cart-count");
+        badge?.classList.add("cart-count-bump");
+        setTimeout(() => badge?.classList.remove("cart-count-bump"), 400);
       } catch (error) {
         console.error(error);
-        showToast(error.message || "Could not add the item to cart.");
+        showToast(error.message || "Could not add the item to cart.", "error");
       } finally {
         button.disabled = false;
       }
@@ -766,6 +791,8 @@ async function renderShop(params) {
   const sort = params.get("sort") || "latest";
   updatePageMeta({ title: category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Lenses` : "Shop" });
 
+  app.innerHTML = skeletonGrid(8);
+
   const query = new URLSearchParams();
   if (search) query.set("search", search);
   if (category) query.set("category", category);
@@ -827,6 +854,12 @@ async function renderShop(params) {
   document.querySelector("[name='sort']")?.addEventListener("change", applyShopFilters);
   document.querySelector("[name='category']")?.addEventListener("change", applyShopFilters);
 
+  let searchDebounceTimer;
+  document.querySelector("[name='search']")?.addEventListener("input", () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(applyShopFilters, 350);
+  });
+
   bindCardActions(app);
 }
 
@@ -884,7 +917,13 @@ async function renderProduct(path) {
         </dl>
 
         <div class="detail-actions" id="detail-actions-anchor">
-          <button class="detail-add-btn button" data-action="cart" data-product-id="${product.id}" ${outOfStock ? "disabled" : ""}>
+          ${!outOfStock ? `
+          <div class="detail-qty-row">
+            <button class="detail-qty-btn" id="detail-qty-dec" type="button">−</button>
+            <span class="detail-qty-val" id="detail-qty">1</span>
+            <button class="detail-qty-btn" id="detail-qty-inc" type="button">+</button>
+          </div>` : ""}
+          <button class="detail-add-btn button" data-action="cart" data-product-id="${product.id}" data-qty="1" ${outOfStock ? "disabled" : ""}>
             ${outOfStock ? "Out of Stock" : "Add to Cart"}
           </button>
           <button class="detail-fav-btn${isFavorited ? " favorited" : ""}" data-action="favorite" data-product-id="${product.id}" title="${isFavorited ? "Remove from favorites" : "Add to favorites"}">
@@ -907,6 +946,20 @@ async function renderProduct(path) {
   `;
   bindCardActions(app);
 
+  const qtyEl = document.getElementById("detail-qty");
+  const addBtn = app.querySelector(".detail-add-btn");
+  if (qtyEl && addBtn) {
+    document.getElementById("detail-qty-dec")?.addEventListener("click", () => {
+      const cur = Number(qtyEl.textContent);
+      if (cur > 1) { qtyEl.textContent = cur - 1; addBtn.dataset.qty = cur - 1; }
+    });
+    document.getElementById("detail-qty-inc")?.addEventListener("click", () => {
+      const cur = Number(qtyEl.textContent);
+      const max = product.stockQuantity || 99;
+      if (cur < max) { qtyEl.textContent = cur + 1; addBtn.dataset.qty = cur + 1; }
+    });
+  }
+
   const anchor = document.getElementById("detail-actions-anchor");
   const stickyBar = document.getElementById("sticky-atc");
   if (anchor && stickyBar && window.IntersectionObserver) {
@@ -919,6 +972,23 @@ async function renderProduct(path) {
       { threshold: 0 },
     ).observe(anchor);
   }
+
+  fetch(`/api/products/${product.slug}/related`)
+    .then((r) => r.json())
+    .then((related) => {
+      if (!related.length) return;
+      const section = document.createElement("section");
+      section.className = "related-section";
+      section.innerHTML = `
+        <div class="section-head" style="margin-top:48px;">
+          <div><h2>You might also like</h2><p>More from ${escapeHtml(product.category || "this category")}</p></div>
+        </div>
+        <div class="product-grid related-grid">${related.map(cardMarkup).join("")}</div>
+      `;
+      app.appendChild(section);
+      bindCardActions(section);
+    })
+    .catch(() => {});
 }
 
 function cartSummary(items) {
@@ -4013,6 +4083,7 @@ async function route() {
     return;
   }
 
+  window.scrollTo({ top: 0, behavior: "instant" });
   app.innerHTML = `<div class="page-loading">Loading…</div>`;
 
   if (!state.home || !state.categories.length || !state.oauthConfig || !state.paymentConfig) {
@@ -4199,4 +4270,16 @@ route().catch((error) => {
   console.error(error);
   app.innerHTML = `<div class="empty-state">The app could not be loaded.</div>`;
 });
+
+/* ── Back to top ─────────────────────────────────────── */
+const backToTop = document.createElement("button");
+backToTop.id = "back-to-top";
+backToTop.className = "back-to-top hidden";
+backToTop.setAttribute("aria-label", "Back to top");
+backToTop.innerHTML = "↑";
+document.body.appendChild(backToTop);
+backToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+window.addEventListener("scroll", () => {
+  backToTop.classList.toggle("hidden", window.scrollY < 400);
+}, { passive: true });
 

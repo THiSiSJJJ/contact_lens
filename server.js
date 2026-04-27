@@ -1727,6 +1727,18 @@ app.get("/api/products/:identifier", async (request, response, next) => {
   }
 });
 
+app.get("/api/products/:identifier/related", async (request, response, next) => {
+  try {
+    const product = await fetchProductByIdOrSlug(request.params.identifier);
+    if (!product) { response.json([]); return; }
+    const related = await fetchProducts({ category: product.categorySlug, limit: 5, published: true });
+    const filtered = related.filter((p) => p.id !== product.id).slice(0, 4);
+    response.json(filtered);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/api/favorites", requireAuth, async (request, response, next) => {
   try {
     const rows = await all("SELECT product_id FROM favorites WHERE user_id = ?", [request.auth.user.id]);
