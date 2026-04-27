@@ -3512,13 +3512,13 @@ function renderCategoriesTab(adminContent, categories, reload) {
       if (!confirm(`Delete "${name}"?\n\nProducts in this category will be moved to another category automatically.`)) return;
       button.disabled = true;
       const response = await api(`/api/admin/categories/${button.dataset.deleteCategory}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         showToast(`Category "${name}" deleted.`, "success");
         await loadCategories();
         await reload();
       } else {
-        const data = await response.json().catch(() => ({}));
-        showToast(data.error || "Could not delete category.", "error");
+        showToast(data.details || data.error || "Could not delete category.", "error");
         button.disabled = false;
       }
     });
