@@ -2341,6 +2341,7 @@ app.put("/api/admin/products/:id", requireAdmin, async (request, response, next)
 
 app.delete("/api/admin/products/:id", requireAdmin, async (request, response, next) => {
   try {
+    await run("UPDATE order_items SET product_id = NULL WHERE product_id = ?", [request.params.id]);
     await run("DELETE FROM products WHERE id = ?", [request.params.id]);
     response.json({ message: "Product deleted." });
   } catch (error) {
@@ -2544,6 +2545,7 @@ app.put("/api/admin/categories/:id", requireAdmin, async (request, response, nex
 
 app.delete("/api/admin/categories/:id", requireAdmin, async (request, response, next) => {
   try {
+    await run("UPDATE products SET category_id = NULL WHERE category_id = ?", [request.params.id]);
     await run("DELETE FROM categories WHERE id = ?", [request.params.id]);
     response.json({ message: "Category deleted." });
   } catch (error) {
