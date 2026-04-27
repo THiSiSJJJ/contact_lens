@@ -3724,6 +3724,8 @@ img[src=""] { opacity: 0; }
 /* ═══════════════════════════════════════════════════════════
    HEADER — ACTIVE NAV LINK INDICATOR
    ═══════════════════════════════════════════════════════════ */
+.main-nav a { text-decoration: none; }
+.main-nav a::after { content: none; }
 .main-nav a.nav-active {
   color: #fff;
   font-weight: 700;
@@ -3734,7 +3736,7 @@ img[src=""] { opacity: 0; }
   position: absolute;
   bottom: -4px; left: 0; right: 0;
   height: 2px;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.85);
   border-radius: 2px;
 }
 
