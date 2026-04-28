@@ -16,7 +16,7 @@ dotenv.config({ override: true });
 const app = express();
 const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
-const uploadsDir = path.join(publicDir, "uploads");
+const uploadsDir = process.env.UPLOADS_DIR || path.join(publicDir, "uploads");
 const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || `http://localhost:${PORT}`;
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -196,6 +196,7 @@ app.use(
     },
   }),
 );
+app.use("/uploads", express.static(uploadsDir, { maxAge: "7d" }));
 
 function createToken() {
   return crypto.randomBytes(32).toString("hex");
