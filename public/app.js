@@ -116,21 +116,6 @@ const LANGS = {
     "profile.postalCode": "Postal code", "profile.prefecture": "Prefecture",
     "profile.city": "City", "profile.addressLine1": "Address line 1",
     "profile.addressLine2": "Address line 2", "profile.optional": "(optional)",
-    /* reviews */
-    "review.title": "Customer Reviews",
-    "review.writeReview": "Write a Review",
-    "review.yourRating": "Your rating",
-    "review.comment": "Your review",
-    "review.commentPlaceholder": "Share your experience with this product… (optional)",
-    "review.submit": "Submit Review",
-    "review.submitting": "Submitting…",
-    "review.submitted": "Thanks! Your review is awaiting approval.",
-    "review.alreadyReviewed": "You've already reviewed this product.",
-    "review.loginToReview": "Log in to leave a review",
-    "review.noReviews": "No reviews yet — be the first!",
-    "review.based": (n) => `Based on ${n} review${n !== 1 ? "s" : ""}`,
-    "review.approve": "Approve", "review.approved": "Approved", "review.pending": "Pending",
-    "review.delete": "Delete",
     /* orders */
     "order.timeline.pending": "Ordered", "order.timeline.processing": "Processing",
     "order.timeline.shipped": "Shipped", "order.timeline.arrived": "Arrived",
@@ -256,21 +241,6 @@ const LANGS = {
     "profile.postalCode": "Шуудангийн дугаар", "profile.prefecture": "Аймаг / Муж",
     "profile.city": "Хот", "profile.addressLine1": "Хаяг 1-р мөр",
     "profile.addressLine2": "Хаяг 2-р мөр", "profile.optional": "(заавал биш)",
-    /* reviews */
-    "review.title": "Хэрэглэгчийн сэтгэгдэл",
-    "review.writeReview": "Сэтгэгдэл бичих",
-    "review.yourRating": "Таны үнэлгээ",
-    "review.comment": "Таны сэтгэгдэл",
-    "review.commentPlaceholder": "Энэ бүтээгдэхүүний талаар туршлагаа хуваалцаарай… (заавал биш)",
-    "review.submit": "Сэтгэгдэл илгээх",
-    "review.submitting": "Илгээж байна…",
-    "review.submitted": "Баярлалаа! Таны сэтгэгдэл хянагдаж байна.",
-    "review.alreadyReviewed": "Та энэ бүтээгдэхүүнийг аль хэдийн үнэлсэн байна.",
-    "review.loginToReview": "Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү",
-    "review.noReviews": "Одоохондоо сэтгэгдэл байхгүй — эхний хүн байгаарай!",
-    "review.based": (n) => `${n} сэтгэгдэлд үндэслэсэн`,
-    "review.approve": "Зөвшөөрөх", "review.approved": "Зөвшөөрсөн", "review.pending": "Хүлээгдэж байна",
-    "review.delete": "Устгах",
     /* orders */
     "order.timeline.pending": "Захиалсан", "order.timeline.processing": "Бэлтгэж байна",
     "order.timeline.shipped": "Илгээсэн", "order.timeline.arrived": "Ирсэн",
@@ -1165,11 +1135,6 @@ async function renderProduct(path) {
         ${isFavorited ? "♥" : "♡"}
       </button>
     </div>
-    <section class="reviews-section" id="reviews-section">
-      <div class="reviews-inner">
-        <div class="reviews-loading muted">${t("misc.loading")}</div>
-      </div>
-    </section>
   `;
   bindCardActions(app);
 
@@ -1231,112 +1196,6 @@ async function renderProduct(path) {
 
   finishPageLoad();
 
-  /* reviews */
-  function starsHtml(rating, max = 5) {
-    let s = "";
-    for (let i = 1; i <= max; i++) s += i <= Math.round(rating) ? "★" : "☆";
-    return s;
-  }
-
-  fetch(`/api/products/${product.id}/reviews`)
-    .then((r) => r.json())
-    .then((data) => {
-      const section = document.getElementById("reviews-section");
-      if (!section) return;
-      const { reviews, count, average } = data;
-      const summaryHtml = count > 0
-        ? `<div class="reviews-summary">
-             <span class="reviews-avg-score">${average}</span>
-             <span class="reviews-stars">${starsHtml(average)}</span>
-             <span class="muted reviews-count">${t("review.based", count)}</span>
-           </div>`
-        : "";
-      const reviewListHtml = reviews.length
-        ? reviews.map((r) => `
-            <div class="review-card">
-              <div class="review-card-head">
-                <div class="review-author-avatar">${escapeHtml((r.author_name || "?")[0].toUpperCase())}</div>
-                <div>
-                  <div class="review-author-name">${escapeHtml(r.author_name)}</div>
-                  <div class="review-stars-row">${starsHtml(r.rating)}</div>
-                </div>
-                <div class="review-date muted">${new Date(r.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}</div>
-              </div>
-              ${r.body ? `<p class="review-body">${escapeHtml(r.body)}</p>` : ""}
-            </div>`).join("")
-        : `<p class="muted review-empty">${t("review.noReviews")}</p>`;
-
-      let formHtml;
-      if (!state.me) {
-        formHtml = `<p class="muted" style="font-size:0.9rem;"><a href="${loginHash(`/product/${product.slug}`)}" style="color:var(--teal);">${t("review.loginToReview")}</a></p>`;
-      } else {
-        formHtml = `
-          <form id="review-form" class="review-form">
-            <div class="review-form-label">${t("review.yourRating")}</div>
-            <div class="star-input" id="star-input">
-              ${[1,2,3,4,5].map((n) => `<button type="button" class="star-btn" data-val="${n}" aria-label="${n} stars">★</button>`).join("")}
-            </div>
-            <input type="hidden" id="review-rating" value="" />
-            <label class="review-form-label" for="review-body">${t("review.comment")}</label>
-            <textarea id="review-body" class="review-textarea" rows="3" placeholder="${t("review.commentPlaceholder")}"></textarea>
-            <button type="submit" class="button review-submit-btn">${t("review.submit")}</button>
-            <div id="review-result" class="muted" style="font-size:0.9rem;margin-top:8px;"></div>
-          </form>`;
-      }
-
-      section.innerHTML = `
-        <div class="reviews-inner">
-          <div class="reviews-header">
-            <h2 class="reviews-title">${t("review.title")}</h2>
-            ${summaryHtml}
-          </div>
-          <div class="reviews-list">${reviewListHtml}</div>
-          <div class="review-write-section">
-            <h3 class="reviews-write-title">${t("review.writeReview")}</h3>
-            ${formHtml}
-          </div>
-        </div>`;
-
-      if (state.me) {
-        const starBtns = section.querySelectorAll(".star-btn");
-        const ratingInput = section.querySelector("#review-rating");
-        starBtns.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const val = Number(btn.dataset.val);
-            ratingInput.value = val;
-            starBtns.forEach((b) => b.classList.toggle("selected", Number(b.dataset.val) <= val));
-          });
-        });
-        section.querySelector("#review-form").addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const rating = ratingInput.value;
-          const body = section.querySelector("#review-body").value;
-          const result = section.querySelector("#review-result");
-          const btn = section.querySelector(".review-submit-btn");
-          if (!rating) { result.textContent = t("review.yourRating") + " ?"; return; }
-          btn.disabled = true;
-          btn.textContent = t("review.submitting");
-          try {
-            const res = await api(`/api/products/${product.id}/reviews`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ rating: Number(rating), body }),
-            });
-            const data2 = await res.json();
-            if (res.status === 409) { result.textContent = t("review.alreadyReviewed"); }
-            else if (res.ok) {
-              result.textContent = t("review.submitted");
-              section.querySelector("#review-form").style.display = "none";
-            } else { result.textContent = data2.error || t("misc.error"); }
-          } catch { result.textContent = t("misc.networkError"); }
-          finally { btn.disabled = false; btn.textContent = t("review.submit"); }
-        });
-      }
-    })
-    .catch(() => {
-      const section = document.getElementById("reviews-section");
-      if (section) section.innerHTML = "";
-    });
 
   fetch(`/api/products/${product.slug}/related`)
     .then((r) => r.json())

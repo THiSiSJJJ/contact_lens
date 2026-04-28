@@ -2933,25 +2933,6 @@ app.get("/api/products/:id/reviews", async (request, response, next) => {
   } catch (error) { next(error); }
 });
 
-app.post("/api/products/:id/reviews", requireAuth, async (request, response, next) => {
-  const { rating, body } = request.body || {};
-  const ratingNum = Number(rating);
-  if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
-    response.status(400).json({ error: "Rating must be between 1 and 5." });
-    return;
-  }
-  try {
-    const product = await get("SELECT id FROM products WHERE id = ? OR slug = ?", [request.params.id, request.params.id]);
-    if (!product) { response.status(404).json({ error: "Not found." }); return; }
-    const existing = await get("SELECT id FROM reviews WHERE product_id = ? AND user_id = ?", [product.id, request.auth.user.id]);
-    if (existing) { response.status(409).json({ error: "You have already reviewed this product." }); return; }
-    await run(
-      "INSERT INTO reviews (product_id, user_id, rating, body, approved) VALUES (?, ?, ?, ?, 0)",
-      [product.id, request.auth.user.id, ratingNum, (body || "").trim().slice(0, 2000)],
-    );
-    response.json({ ok: true, message: "Your review has been submitted and is awaiting approval." });
-  } catch (error) { next(error); }
-});
 
 app.get("/api/admin/reviews", requireAdmin, async (_request, response, next) => {
   try {
