@@ -512,6 +512,79 @@ async function sendOrderShippedEmail(orderId, trackingNumber) {
   }
 }
 
+async function sendOrderStatusEmail(orderId, status) {
+  if (!mailer) return;
+  const config = {
+    processing: {
+      subject: (n) => `Your order ${n} is being prepared`,
+      headline: "We're Preparing Your Order ⚙️",
+      body: "Great news — we've started preparing your order and it'll be on its way soon!",
+    },
+    arrived: {
+      subject: (n) => `Your order ${n} is out for delivery`,
+      headline: "Your Package Is Out for Delivery 🚚",
+      body: "Your package has arrived at a local facility and is out for delivery. Keep an eye out — it should arrive today!",
+    },
+    completed: {
+      subject: (n) => `Your order ${n} has been delivered`,
+      headline: "Your Order Has Been Delivered ✅",
+      body: "Your order has been delivered. Thank you for shopping with us — we hope you enjoy your lenses!",
+    },
+    cancelled: {
+      subject: (n) => `Your order ${n} has been cancelled`,
+      headline: "Your Order Has Been Cancelled",
+      body: "We're sorry to let you know that your order has been cancelled. If you have any questions or believe this is a mistake, please contact our support team.",
+    },
+  };
+  const cfg = config[status];
+  if (!cfg) return;
+  try {
+    const order = await get("SELECT * FROM orders WHERE id = ?", [orderId]);
+    if (!order) return;
+    const user = await get("SELECT id, name, email FROM users WHERE id = ?", [order.user_id]);
+    if (!user?.email) return;
+    const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f8fc;font-family:Arial,sans-serif;color:#18253a;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px;">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border:1px solid #cfd9e8;border-radius:8px;overflow:hidden;">
+  <tr><td style="background:linear-gradient(135deg,#063a50 0%,#0c7d8a 55%,#1ab8c8 100%);padding:28px 32px;">
+    <div style="font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-0.02em;">Contact_Lens</div>
+    <div style="font-size:0.95rem;color:rgba(255,255,255,0.82);margin-top:4px;">${escapeHtmlEmail(cfg.headline)}</div>
+  </td></tr>
+  <tr><td style="padding:28px 32px 0;">
+    <p style="margin:0 0 10px;font-size:1rem;">Hi ${escapeHtmlEmail(user.name)},</p>
+    <p style="margin:0 0 24px;font-size:0.92rem;color:#5b6e87;line-height:1.75;">${escapeHtmlEmail(cfg.body)}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f8fc;border:1px solid #cfd9e8;border-radius:6px;margin-bottom:16px;">
+      <tr><td style="padding:14px 20px;">
+        <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#5b6e87;">Order Number</div>
+        <div style="font-family:monospace;font-size:1.1rem;font-weight:700;margin-top:4px;">${escapeHtmlEmail(order.order_number)}</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:0 32px 32px;text-align:center;">
+    <a href="${FRONTEND_BASE_URL}/#/orders" style="display:inline-block;padding:13px 36px;background:#0faab5;color:#fff;text-decoration:none;font-weight:700;font-size:0.95rem;border-radius:6px;">View Order</a>
+  </td></tr>
+  <tr><td style="padding:18px 32px;border-top:1px solid #cfd9e8;background:#f4f8fc;text-align:center;">
+    <p style="margin:0;font-size:0.8rem;color:#5b6e87;">Questions? <a href="${FRONTEND_BASE_URL}/#/contact" style="color:#0faab5;">Contact our support team</a></p>
+    <p style="margin:6px 0 0;font-size:0.72rem;color:#a8bace;">© Contact_Lens</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: user.email,
+      subject: cfg.subject(order.order_number),
+      html,
+      text: `Hi ${user.name},\n\n${cfg.body}\n\nOrder: ${order.order_number}\n\nView your order: ${FRONTEND_BASE_URL}/#/orders\n\n— Contact_Lens`,
+    });
+    console.log(`[status-email] "${status}" sent for ${order.order_number} → ${user.email}`);
+  } catch (err) {
+    console.error(`[status-email] Failed for order ${orderId} (${status}):`, err.message);
+  }
+}
+
 function generateReceiptHtml({ order, user, items, address, brandName }) {
   const date = new Date(order.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const paymentLabel = PAYMENT_METHOD_CONFIG[order.payment_method]?.label || order.payment_method || "—";
@@ -1366,6 +1439,36 @@ app.post("/api/auth/forgot-password", async (request, response, next) => {
   }
 });
 
+app.post("/api/auth/forgot-username", async (request, response, next) => {
+  const { name } = request.body || {};
+  if (!name?.trim()) {
+    response.status(400).json({ error: "Name is required." });
+    return;
+  }
+  const message = "If an account with that name exists, a reminder has been sent.";
+  try {
+    const user = await get("SELECT id, name, email FROM users WHERE LOWER(name) = LOWER(?)", [name.trim()]);
+    if (!user) {
+      response.json({ message });
+      return;
+    }
+    if (mailer) {
+      const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
+      const resetUrl = `${FRONTEND_BASE_URL}/#/forgot-password`;
+      await mailer.sendMail({
+        from: `Contact_Lens <${fromAddress}>`,
+        to: user.email,
+        subject: "Your account email reminder",
+        text: `Hi ${user.name},\n\nYou requested a reminder of the email address used for your account.\n\nYour registered email is: ${user.email}\n\nYou can log in at: ${FRONTEND_BASE_URL}/#/login\nForgot your password? ${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
+        html: `<p>Hi ${user.name},</p><p>You requested a reminder of the email address used for your account.</p><p><strong>Your registered email is: ${user.email}</strong></p><p><a href="${FRONTEND_BASE_URL}/#/login">Log in</a> &nbsp;|&nbsp; <a href="${resetUrl}">Forgot password?</a></p><p>If you did not request this, you can ignore this email.</p>`,
+      });
+    }
+    response.json({ message, ...(process.env.NODE_ENV !== "production" && !mailer && { hint: `Email on file: ${user.email}` }) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post("/api/auth/reset-password", async (request, response, next) => {
   const { password, token } = request.body || {};
   if (!token || !password || password.length < 8) {
@@ -1400,24 +1503,24 @@ app.get("/api/me", requireAuth, async (request, response) => {
 });
 
 app.patch("/api/me", requireAuth, async (request, response, next) => {
-  const { name, currentPassword, newPassword } = request.body || {};
+  const { name, currentPassword, newPassword, confirmNewPassword } = request.body || {};
   try {
     const user = await get("SELECT * FROM users WHERE id = ?", [request.auth.user.id]);
     const updates = {};
 
-    if (name?.trim()) updates.name = name.trim();
+    if (name?.trim() && name.trim() !== user.name) updates.name = name.trim();
 
     if (newPassword) {
       if (user.provider !== "local") {
         response.status(400).json({ error: "Password change is only available for email accounts." });
         return;
       }
-      if (!currentPassword || !verifyPassword(currentPassword, user.password_hash)) {
-        response.status(400).json({ error: "Current password is incorrect." });
-        return;
-      }
       if (newPassword.length < 8) {
         response.status(400).json({ error: "New password must be at least 8 characters." });
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        response.status(400).json({ error: "New passwords do not match." });
         return;
       }
       updates.password_hash = hashPassword(newPassword);
@@ -1426,6 +1529,13 @@ app.patch("/api/me", requireAuth, async (request, response, next) => {
     if (!Object.keys(updates).length) {
       response.status(400).json({ error: "Nothing to update." });
       return;
+    }
+
+    if (user.provider === "local") {
+      if (!currentPassword || !verifyPassword(currentPassword, user.password_hash)) {
+        response.status(400).json({ error: "Current password is required to save changes." });
+        return;
+      }
     }
 
     const setClauses = Object.keys(updates).map((k) => `${k} = ?`).join(", ");
@@ -1906,6 +2016,21 @@ app.post("/api/addresses", requireAuth, async (request, response, next) => {
     );
     const address = await get("SELECT * FROM addresses WHERE id = ?", [inserted.lastID]);
     response.status(201).json(address);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.patch("/api/addresses/:id/default", requireAuth, async (request, response, next) => {
+  try {
+    const address = await get("SELECT id FROM addresses WHERE id = ? AND user_id = ?", [request.params.id, request.auth.user.id]);
+    if (!address) {
+      response.status(404).json({ error: "Address not found." });
+      return;
+    }
+    await run("UPDATE addresses SET is_default = 0 WHERE user_id = ?", [request.auth.user.id]);
+    await run("UPDATE addresses SET is_default = 1 WHERE id = ?", [request.params.id]);
+    response.json({ ok: true });
   } catch (error) {
     next(error);
   }
@@ -2599,7 +2724,17 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (request, response, next)
       payload.paymentStatus ?? payload.payment_status ?? payload.paymentstatus ?? current.payment_status;
     const nextTracking = "tracking_number" in payload ? payload.tracking_number : current.tracking_number;
 
-    const isNewlyShipped = current.status !== "shipped" && nextStatus === "shipped";
+    const VALID_STATUSES = ["pending","processing","shipped","arrived","completed","cancelled"];
+    if (payload.status && !VALID_STATUSES.includes(payload.status)) {
+      response.status(400).json({ error: "Invalid status." });
+      return;
+    }
+
+    const isNewlyShipped    = current.status !== "shipped"    && nextStatus === "shipped";
+    const isNewlyProcessing = current.status !== "processing" && nextStatus === "processing";
+    const isNewlyArrived    = current.status !== "arrived"    && nextStatus === "arrived";
+    const isNewlyCompleted  = current.status !== "completed"  && nextStatus === "completed";
+    const isNewlyCancelled  = current.status !== "cancelled"  && nextStatus === "cancelled";
 
     await run(
       `UPDATE orders
@@ -2608,9 +2743,11 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (request, response, next)
       [nextStatus, nextPaymentStatus, nextTracking ?? null, request.params.id],
     );
 
-    if (isNewlyShipped) {
-      sendOrderShippedEmail(request.params.id, nextTracking).catch(() => {});
-    }
+    if (isNewlyShipped)    sendOrderShippedEmail(request.params.id, nextTracking).catch(() => {});
+    if (isNewlyProcessing) sendOrderStatusEmail(request.params.id, "processing").catch(() => {});
+    if (isNewlyArrived)    sendOrderStatusEmail(request.params.id, "arrived").catch(() => {});
+    if (isNewlyCompleted)  sendOrderStatusEmail(request.params.id, "completed").catch(() => {});
+    if (isNewlyCancelled)  sendOrderStatusEmail(request.params.id, "cancelled").catch(() => {});
 
     response.json(await get("SELECT * FROM orders WHERE id = ?", [request.params.id]));
   } catch (error) {
@@ -2773,6 +2910,77 @@ app.put("/api/admin/home-settings", requireAdmin, async (request, response, next
   } catch (error) {
     next(error);
   }
+});
+
+/* ── Reviews ─────────────────────────────────────────────── */
+
+app.get("/api/products/:id/reviews", async (request, response, next) => {
+  try {
+    const product = await get("SELECT id FROM products WHERE id = ? OR slug = ?", [request.params.id, request.params.id]);
+    if (!product) { response.status(404).json({ error: "Not found." }); return; }
+    const reviews = await all(
+      `SELECT r.id, r.rating, r.body, r.created_at, u.name AS author_name
+       FROM reviews r JOIN users u ON u.id = r.user_id
+       WHERE r.product_id = ? AND r.approved = 1
+       ORDER BY r.created_at DESC`,
+      [product.id],
+    );
+    const stats = await get(
+      "SELECT COUNT(*) AS count, AVG(CAST(rating AS REAL)) AS avg FROM reviews WHERE product_id = ? AND approved = 1",
+      [product.id],
+    );
+    response.json({ reviews, count: stats.count, average: stats.avg ? Math.round(stats.avg * 10) / 10 : null });
+  } catch (error) { next(error); }
+});
+
+app.post("/api/products/:id/reviews", requireAuth, async (request, response, next) => {
+  const { rating, body } = request.body || {};
+  const ratingNum = Number(rating);
+  if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
+    response.status(400).json({ error: "Rating must be between 1 and 5." });
+    return;
+  }
+  try {
+    const product = await get("SELECT id FROM products WHERE id = ? OR slug = ?", [request.params.id, request.params.id]);
+    if (!product) { response.status(404).json({ error: "Not found." }); return; }
+    const existing = await get("SELECT id FROM reviews WHERE product_id = ? AND user_id = ?", [product.id, request.auth.user.id]);
+    if (existing) { response.status(409).json({ error: "You have already reviewed this product." }); return; }
+    await run(
+      "INSERT INTO reviews (product_id, user_id, rating, body, approved) VALUES (?, ?, ?, ?, 0)",
+      [product.id, request.auth.user.id, ratingNum, (body || "").trim().slice(0, 2000)],
+    );
+    response.json({ ok: true, message: "Your review has been submitted and is awaiting approval." });
+  } catch (error) { next(error); }
+});
+
+app.get("/api/admin/reviews", requireAdmin, async (_request, response, next) => {
+  try {
+    const rows = await all(
+      `SELECT r.id, r.rating, r.body, r.approved, r.created_at,
+              u.name AS author_name, u.email AS author_email,
+              p.name AS product_name, p.slug AS product_slug
+       FROM reviews r
+       JOIN users u ON u.id = r.user_id
+       JOIN products p ON p.id = r.product_id
+       ORDER BY r.created_at DESC`,
+    );
+    response.json(rows);
+  } catch (error) { next(error); }
+});
+
+app.patch("/api/admin/reviews/:id", requireAdmin, async (request, response, next) => {
+  const { approved } = request.body || {};
+  try {
+    await run("UPDATE reviews SET approved = ? WHERE id = ?", [approved ? 1 : 0, request.params.id]);
+    response.json({ ok: true });
+  } catch (error) { next(error); }
+});
+
+app.delete("/api/admin/reviews/:id", requireAdmin, async (request, response, next) => {
+  try {
+    await run("DELETE FROM reviews WHERE id = ?", [request.params.id]);
+    response.json({ ok: true });
+  } catch (error) { next(error); }
 });
 
 app.use((error, _request, response, _next) => {

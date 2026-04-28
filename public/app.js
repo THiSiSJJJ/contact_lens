@@ -85,8 +85,56 @@ const LANGS = {
     "auth.signingIn": "Signing in…",
     "auth.loginFailed": "Login failed. Check your email and password.",
     "auth.loginForCheckout": "Log in to continue to checkout.",
-    "auth.resetDesc": "Enter your email and we'll send a reset link.",
+    "auth.resetDesc": "Enter your email and we'll send a reset link. Also works for Google and Facebook accounts — sets a local password.",
     "auth.passwordCurrentPlaceholder": "Your password",
+    "auth.forgotEmail": "Forgot email?",
+    "auth.forgotEmailDesc": "Enter the name you registered with and we'll send your email address to the inbox on file.",
+    "auth.yourName": "Your name",
+    "auth.sendReminder": "Send reminder",
+    "auth.forgotEmailSent": "If an account with that name exists, a reminder has been sent.",
+    /* profile */
+    "profile.shippingAddresses": "Shipping Addresses", "profile.addAddress": "+ Add",
+    "profile.noAddresses": "No saved addresses yet.",
+    "profile.defaultBadge": "Default", "profile.setDefault": "Set as default",
+    "profile.saveAddress": "Save address", "profile.cancelAddress": "Cancel",
+    "profile.accountSettings": "Account Settings", "profile.accountSettingsSub": "Update your name or password",
+    "profile.displayName": "Display name",
+    "profile.currentPassword": "Current password", "profile.currentPasswordNote": "(required to save any change)",
+    "profile.newPassword": "New password", "profile.newPasswordNote": "(leave blank to keep current)",
+    "profile.confirmNewPassword": "Confirm new password",
+    "profile.saveChanges": "Save changes", "profile.saving": "Saving…",
+    "profile.noChanges": "No changes to save.", "profile.changesSaved": "Changes saved.",
+    "profile.orders": "Orders", "profile.favorites": "Favorites", "profile.addresses": "Addresses",
+    "profile.orderHistory": "Order History", "profile.browseShop": "Browse Shop",
+    "profile.contactSupport": "Contact Support", "profile.adminPanel": "Admin Panel",
+    "profile.cart": "Cart", "profile.logout": "Logout",
+    "profile.customer": "Customer", "profile.admin": "Admin",
+    "profile.viaProvider": (p) => `via ${p}`,
+    "profile.supportMessages": "Support Messages", "profile.newMessage": "New message →",
+    "profile.noMessages": "No messages yet.",
+    "profile.fullName": "Full name", "profile.phone": "Phone",
+    "profile.postalCode": "Postal code", "profile.prefecture": "Prefecture",
+    "profile.city": "City", "profile.addressLine1": "Address line 1",
+    "profile.addressLine2": "Address line 2", "profile.optional": "(optional)",
+    /* reviews */
+    "review.title": "Customer Reviews",
+    "review.writeReview": "Write a Review",
+    "review.yourRating": "Your rating",
+    "review.comment": "Your review",
+    "review.commentPlaceholder": "Share your experience with this product… (optional)",
+    "review.submit": "Submit Review",
+    "review.submitting": "Submitting…",
+    "review.submitted": "Thanks! Your review is awaiting approval.",
+    "review.alreadyReviewed": "You've already reviewed this product.",
+    "review.loginToReview": "Log in to leave a review",
+    "review.noReviews": "No reviews yet — be the first!",
+    "review.based": (n) => `Based on ${n} review${n !== 1 ? "s" : ""}`,
+    "review.approve": "Approve", "review.approved": "Approved", "review.pending": "Pending",
+    "review.delete": "Delete",
+    /* orders */
+    "order.timeline.pending": "Ordered", "order.timeline.processing": "Processing",
+    "order.timeline.shipped": "Shipped", "order.timeline.arrived": "Arrived",
+    "order.timeline.completed": "Delivered", "order.timeline.cancelled": "Cancelled",
     /* misc */
     "misc.remove": "Remove", "misc.each": "each", "misc.free": "Free",
     "misc.loading": "Loading…", "misc.error": "Something went wrong.",
@@ -177,8 +225,56 @@ const LANGS = {
     "auth.signingIn": "Нэвтэрч байна…",
     "auth.loginFailed": "Нэвтрэх амжилтгүй. Имэйл болон нууц үгийг шалгана уу.",
     "auth.loginForCheckout": "Захиалгыг үргэлжлүүлэхийн тулд нэвтэрнэ үү.",
-    "auth.resetDesc": "Имэйлээ оруулна уу, сэргээх холбоос илгээнэ.",
+    "auth.resetDesc": "Имэйлээ оруулна уу, сэргээх холбоос илгээнэ. Google болон Facebook данстай ч ажилладаг — орон нутгийн нууц үг тохируулна.",
     "auth.passwordCurrentPlaceholder": "Таны нууц үг",
+    "auth.forgotEmail": "Имэйлээ мартсан уу?",
+    "auth.forgotEmailDesc": "Бүртгүүлсэн нэрээ оруулна уу, имэйл хаягийг таны данс дээр бүртгэлтэй имэйлд илгээнэ.",
+    "auth.yourName": "Таны нэр",
+    "auth.sendReminder": "Сануулга илгээх",
+    "auth.forgotEmailSent": "Тэр нэртэй данс байгаа бол сануулга илгээгдлээ.",
+    /* profile */
+    "profile.shippingAddresses": "Хүргэлтийн хаяг", "profile.addAddress": "+ Нэмэх",
+    "profile.noAddresses": "Хадгалсан хаяг байхгүй байна.",
+    "profile.defaultBadge": "Үндсэн", "profile.setDefault": "Үндсэн болгох",
+    "profile.saveAddress": "Хаяг хадгалах", "profile.cancelAddress": "Цуцлах",
+    "profile.accountSettings": "Данс тохиргоо", "profile.accountSettingsSub": "Нэр эсвэл нууц үгийг шинэчлэх",
+    "profile.displayName": "Дэлгэрэнгүй нэр",
+    "profile.currentPassword": "Одоогийн нууц үг", "profile.currentPasswordNote": "(ямар ч өөрчлөлт хадгалахад шаардлагатай)",
+    "profile.newPassword": "Шинэ нууц үг", "profile.newPasswordNote": "(хоосон үлдээвэл хуучин нууц үг хэвээр үлдэнэ)",
+    "profile.confirmNewPassword": "Шинэ нууц үгийг баталгаажуулах",
+    "profile.saveChanges": "Хадгалах", "profile.saving": "Хадгалж байна…",
+    "profile.noChanges": "Өөрчлөлт байхгүй байна.", "profile.changesSaved": "Өөрчлөлт хадгалагдлаа.",
+    "profile.orders": "Захиалга", "profile.favorites": "Дуртай", "profile.addresses": "Хаяг",
+    "profile.orderHistory": "Захиалгын түүх", "profile.browseShop": "Дэлгүүр харах",
+    "profile.contactSupport": "Дэмжлэг авах", "profile.adminPanel": "Админ хэсэг",
+    "profile.cart": "Сагс", "profile.logout": "Гарах",
+    "profile.customer": "Хэрэглэгч", "profile.admin": "Админ",
+    "profile.viaProvider": (p) => `${p}-ээр`,
+    "profile.supportMessages": "Дэмжлэгийн мессежүүд", "profile.newMessage": "Шинэ мессеж →",
+    "profile.noMessages": "Мессеж байхгүй байна.",
+    "profile.fullName": "Бүтэн нэр", "profile.phone": "Утас",
+    "profile.postalCode": "Шуудангийн дугаар", "profile.prefecture": "Аймаг / Муж",
+    "profile.city": "Хот", "profile.addressLine1": "Хаяг 1-р мөр",
+    "profile.addressLine2": "Хаяг 2-р мөр", "profile.optional": "(заавал биш)",
+    /* reviews */
+    "review.title": "Хэрэглэгчийн сэтгэгдэл",
+    "review.writeReview": "Сэтгэгдэл бичих",
+    "review.yourRating": "Таны үнэлгээ",
+    "review.comment": "Таны сэтгэгдэл",
+    "review.commentPlaceholder": "Энэ бүтээгдэхүүний талаар туршлагаа хуваалцаарай… (заавал биш)",
+    "review.submit": "Сэтгэгдэл илгээх",
+    "review.submitting": "Илгээж байна…",
+    "review.submitted": "Баярлалаа! Таны сэтгэгдэл хянагдаж байна.",
+    "review.alreadyReviewed": "Та энэ бүтээгдэхүүнийг аль хэдийн үнэлсэн байна.",
+    "review.loginToReview": "Сэтгэгдэл үлдээхийн тулд нэвтэрнэ үү",
+    "review.noReviews": "Одоохондоо сэтгэгдэл байхгүй — эхний хүн байгаарай!",
+    "review.based": (n) => `${n} сэтгэгдэлд үндэслэсэн`,
+    "review.approve": "Зөвшөөрөх", "review.approved": "Зөвшөөрсөн", "review.pending": "Хүлээгдэж байна",
+    "review.delete": "Устгах",
+    /* orders */
+    "order.timeline.pending": "Захиалсан", "order.timeline.processing": "Бэлтгэж байна",
+    "order.timeline.shipped": "Илгээсэн", "order.timeline.arrived": "Ирсэн",
+    "order.timeline.completed": "Хүргэгдсэн", "order.timeline.cancelled": "Цуцлагдсан",
     /* misc */
     "misc.remove": "Устгах", "misc.each": "нэгж", "misc.free": "Үнэгүй",
     "misc.loading": "Ачаалж байна…", "misc.error": "Алдаа гарлаа.",
@@ -722,8 +818,15 @@ function updateHeader() {
   if (signupLink) signupLink.classList.toggle("hidden", loggedIn);
   if (headerLogoutBtn) headerLogoutBtn.classList.toggle("hidden", !loggedIn);
   applyLang();
-  // Set auth-dependent text AFTER applyLang so i18n doesn't overwrite the username
-  accountLink.textContent = state.me ? state.me.name : t("header.login");
+  // Set auth-dependent content AFTER applyLang so i18n doesn't overwrite
+  if (state.me) {
+    const initial = state.me.name.charAt(0).toUpperCase();
+    accountLink.innerHTML = `<span class="header-avatar">${escapeHtml(initial)}</span><span class="header-username">${escapeHtml(state.me.name)}</span>`;
+    accountLink.classList.add("header-account-pill");
+  } else {
+    accountLink.innerHTML = t("header.login");
+    accountLink.classList.remove("header-account-pill");
+  }
   accountLink.href = state.me ? "#/profile" : "#/login";
   favoriteLink.href = state.me ? "#/favorites" : loginHash("/favorites");
   favoriteCount.textContent = state.favorites.length;
@@ -863,15 +966,25 @@ async function renderShop(params) {
     return;
   }
 
+  const catLabel = category
+    ? (state.categories.find(c => c.slug === category)?.name || category)
+    : "";
+
   app.innerHTML = `
-    <div class="shop-page-head">
-      <div>
-        <h1 class="shop-title">${t("shop.title")}</h1>
-        <p class="shop-count">${t("shop.found", products.length)}</p>
+    <div class="shop-banner">
+      <div class="shop-banner-inner">
+        <div>
+          <h1 class="shop-title">${catLabel ? escapeHtml(catLabel) : t("shop.title")}</h1>
+          <p class="shop-count">${t("shop.found", products.length)}</p>
+        </div>
+        ${catLabel ? `<a href="#/shop" class="shop-clear-cat">✕ Clear filter</a>` : ""}
       </div>
     </div>
     <form id="shop-filter-form" class="shop-filters">
-      <input type="search" name="search" class="shop-search" placeholder="${t("shop.searchPlaceholder")}" value="${escapeHtml(search)}" />
+      <label class="shop-search-wrap">
+        <span class="shop-search-icon">◎</span>
+        <input type="search" name="search" class="shop-search" placeholder="${t("shop.searchPlaceholder")}" value="${escapeHtml(search)}" />
+      </label>
       <select name="category" class="shop-select">
         <option value="">${t("shop.allCategories")}</option>
         ${state.categories.map((item) => `<option value="${item.slug}" ${item.slug === category ? "selected" : ""}>${escapeHtml(currentLang === "mn" && item.name_mn ? item.name_mn : item.name)}</option>`).join("")}
@@ -882,7 +995,6 @@ async function renderShop(params) {
         <option value="price-desc" ${sort === "price-desc" ? "selected" : ""}>${t("shop.priceDesc")}</option>
         <option value="name" ${sort === "name" ? "selected" : ""}>${t("shop.nameAZ")}</option>
       </select>
-      <button class="button shop-filter-btn" type="submit">${t("shop.applyFilters")}</button>
     </form>
     ${products.length
       ? `<section class="product-grid">${products.map(cardMarkup).join("")}</section>`
@@ -1053,6 +1165,11 @@ async function renderProduct(path) {
         ${isFavorited ? "♥" : "♡"}
       </button>
     </div>
+    <section class="reviews-section" id="reviews-section">
+      <div class="reviews-inner">
+        <div class="reviews-loading muted">${t("misc.loading")}</div>
+      </div>
+    </section>
   `;
   bindCardActions(app);
 
@@ -1114,6 +1231,113 @@ async function renderProduct(path) {
 
   finishPageLoad();
 
+  /* reviews */
+  function starsHtml(rating, max = 5) {
+    let s = "";
+    for (let i = 1; i <= max; i++) s += i <= Math.round(rating) ? "★" : "☆";
+    return s;
+  }
+
+  fetch(`/api/products/${product.id}/reviews`)
+    .then((r) => r.json())
+    .then((data) => {
+      const section = document.getElementById("reviews-section");
+      if (!section) return;
+      const { reviews, count, average } = data;
+      const summaryHtml = count > 0
+        ? `<div class="reviews-summary">
+             <span class="reviews-avg-score">${average}</span>
+             <span class="reviews-stars">${starsHtml(average)}</span>
+             <span class="muted reviews-count">${t("review.based", count)}</span>
+           </div>`
+        : "";
+      const reviewListHtml = reviews.length
+        ? reviews.map((r) => `
+            <div class="review-card">
+              <div class="review-card-head">
+                <div class="review-author-avatar">${escapeHtml((r.author_name || "?")[0].toUpperCase())}</div>
+                <div>
+                  <div class="review-author-name">${escapeHtml(r.author_name)}</div>
+                  <div class="review-stars-row">${starsHtml(r.rating)}</div>
+                </div>
+                <div class="review-date muted">${new Date(r.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}</div>
+              </div>
+              ${r.body ? `<p class="review-body">${escapeHtml(r.body)}</p>` : ""}
+            </div>`).join("")
+        : `<p class="muted review-empty">${t("review.noReviews")}</p>`;
+
+      let formHtml;
+      if (!state.me) {
+        formHtml = `<p class="muted" style="font-size:0.9rem;"><a href="${loginHash(`/product/${product.slug}`)}" style="color:var(--teal);">${t("review.loginToReview")}</a></p>`;
+      } else {
+        formHtml = `
+          <form id="review-form" class="review-form">
+            <div class="review-form-label">${t("review.yourRating")}</div>
+            <div class="star-input" id="star-input">
+              ${[1,2,3,4,5].map((n) => `<button type="button" class="star-btn" data-val="${n}" aria-label="${n} stars">★</button>`).join("")}
+            </div>
+            <input type="hidden" id="review-rating" value="" />
+            <label class="review-form-label" for="review-body">${t("review.comment")}</label>
+            <textarea id="review-body" class="review-textarea" rows="3" placeholder="${t("review.commentPlaceholder")}"></textarea>
+            <button type="submit" class="button review-submit-btn">${t("review.submit")}</button>
+            <div id="review-result" class="muted" style="font-size:0.9rem;margin-top:8px;"></div>
+          </form>`;
+      }
+
+      section.innerHTML = `
+        <div class="reviews-inner">
+          <div class="reviews-header">
+            <h2 class="reviews-title">${t("review.title")}</h2>
+            ${summaryHtml}
+          </div>
+          <div class="reviews-list">${reviewListHtml}</div>
+          <div class="review-write-section">
+            <h3 class="reviews-write-title">${t("review.writeReview")}</h3>
+            ${formHtml}
+          </div>
+        </div>`;
+
+      if (state.me) {
+        const starBtns = section.querySelectorAll(".star-btn");
+        const ratingInput = section.querySelector("#review-rating");
+        starBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const val = Number(btn.dataset.val);
+            ratingInput.value = val;
+            starBtns.forEach((b) => b.classList.toggle("selected", Number(b.dataset.val) <= val));
+          });
+        });
+        section.querySelector("#review-form").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const rating = ratingInput.value;
+          const body = section.querySelector("#review-body").value;
+          const result = section.querySelector("#review-result");
+          const btn = section.querySelector(".review-submit-btn");
+          if (!rating) { result.textContent = t("review.yourRating") + " ?"; return; }
+          btn.disabled = true;
+          btn.textContent = t("review.submitting");
+          try {
+            const res = await api(`/api/products/${product.id}/reviews`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ rating: Number(rating), body }),
+            });
+            const data2 = await res.json();
+            if (res.status === 409) { result.textContent = t("review.alreadyReviewed"); }
+            else if (res.ok) {
+              result.textContent = t("review.submitted");
+              section.querySelector("#review-form").style.display = "none";
+            } else { result.textContent = data2.error || t("misc.error"); }
+          } catch { result.textContent = t("misc.networkError"); }
+          finally { btn.disabled = false; btn.textContent = t("review.submit"); }
+        });
+      }
+    })
+    .catch(() => {
+      const section = document.getElementById("reviews-section");
+      if (section) section.innerHTML = "";
+    });
+
   fetch(`/api/products/${product.slug}/related`)
     .then((r) => r.json())
     .then((related) => {
@@ -1145,21 +1369,9 @@ function cartSummary(items) {
 function renderCart() {
   updatePageMeta({ title: "Shopping Cart" });
   const summary = cartSummary(state.cart);
-  const stepBar = `
-    <div class="checkout-step-bar">
-      <span class="checkout-step-item active">Cart</span>
-      <span class="checkout-step-arrow">›</span>
-      <span class="checkout-step-item">Checkout</span>
-      <span class="checkout-step-arrow">›</span>
-      <span class="checkout-step-item">Payment</span>
-      <span class="checkout-step-arrow">›</span>
-      <span class="checkout-step-item">Done</span>
-    </div>`;
-
   if (!state.cart.length) {
     app.innerHTML = `
       <div class="cart-page">
-        ${stepBar}
         <div class="cart-empty-state">
           <div class="cart-empty-icon">◉</div>
           <h2>${t("cart.empty")}</h2>
@@ -1172,55 +1384,51 @@ function renderCart() {
 
   app.innerHTML = `
     <div class="cart-page">
-      ${stepBar}
-      ${!state.me ? `<div class="notice">Shopping as guest — <a href="${loginHash("/cart")}" style="color:var(--teal);font-weight:600;">${t("header.login")}</a> to save your cart and order history across sessions.</div>` : ""}
+      ${!state.me ? `<div class="notice">Shopping as guest — <a href="${loginHash("/cart")}" style="color:var(--teal);font-weight:600;">${t("header.login")}</a> to save your cart.</div>` : ""}
       <div class="cart-layout">
-        <div class="cart-items-col">
-          <div class="section-head">
-            <div>
-              <h2>${t("cart.title")}</h2>
-              <p>${t("cart.items", summary.totalItems)}</p>
-            </div>
+        <div class="cart-main-card">
+          <div class="cart-main-header">
+            <span class="cart-main-title">${t("cart.title")}</span>
+            <span class="cart-badge">${t("cart.items", summary.totalItems)}</span>
           </div>
-          <div class="cart-table">
+          <div class="cart-rows">
             ${state.cart.map((item) => {
               const thumb = item.product.images?.[0]?.imageUrl || "";
               const unitPrice = item.product.discountPrice || item.product.price;
               return `
-                <article class="cart-item${thumb ? " cart-item-with-image" : ""}">
-                  ${thumb ? `<img class="cart-item-thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(item.product.name)}" />` : ""}
-                  <div class="cart-item-head">
-                    <div>
-                      <strong>${escapeHtml(productName(item.product))}</strong>
-                      <div class="line-item-sub">${escapeHtml(item.product.brand)}</div>
-                    </div>
-                    <strong>${formatJPY(unitPrice * item.quantity)}</strong>
+                <div class="cart-row">
+                  ${thumb
+                    ? `<img class="cart-row-img" src="${escapeHtml(thumb)}" alt="${escapeHtml(item.product.name)}" />`
+                    : `<div class="cart-row-img cart-row-img-empty">◉</div>`}
+                  <div class="cart-row-info">
+                    <p class="cart-row-name">${escapeHtml(productName(item.product))}</p>
+                    <p class="cart-row-brand">${escapeHtml(item.product.brand)}</p>
+                    <p class="cart-row-unit">${formatJPY(unitPrice)} ${t("misc.each")}</p>
                   </div>
-                  <div class="cart-item-foot">
-                    <div class="quantity-controls">
-                      <button data-cart-dec="${item.id}">−</button>
-                      <span>${item.quantity}</span>
-                      <button data-cart-inc="${item.id}">+</button>
-                    </div>
-                    <span class="cart-unit-price muted">${formatJPY(unitPrice)} ${t("misc.each")}</span>
-                    <button class="chip chip-danger" data-cart-remove="${item.id}">${t("misc.remove")}</button>
+                  <div class="quantity-controls">
+                    <button data-cart-dec="${item.id}">−</button>
+                    <span>${item.quantity}</span>
+                    <button data-cart-inc="${item.id}">+</button>
                   </div>
-                </article>`;
+                  <strong class="cart-row-price">${formatJPY(unitPrice * item.quantity)}</strong>
+                  <button class="cart-row-remove" data-cart-remove="${item.id}" title="${t("misc.remove")}">✕</button>
+                </div>`;
             }).join("")}
           </div>
         </div>
-        <aside class="cart-summary-col">
+        <aside>
           <div class="cart-summary-card">
-            <h3>Order Summary</h3>
+            <h3 class="cart-summary-title">Order Summary</h3>
             <div class="summary-line">
               <span>${t("cart.subtotal", summary.totalItems)}</span>
-              <strong>${formatJPY(summary.subtotal)}</strong>
+              <span>${formatJPY(summary.subtotal)}</span>
             </div>
             <div class="summary-line">
               <span>${t("cart.shipping")}</span>
-              <strong>${summary.shipping === 0 ? "Free" : formatJPY(summary.shipping)}</strong>
+              <span class="${summary.shipping === 0 ? "cart-free-shipping" : ""}">${summary.shipping === 0 ? "Free" : formatJPY(summary.shipping)}</span>
             </div>
-            <div class="summary-line summary-total">
+            ${summary.shipping > 0 ? `<p class="cart-free-hint">Add ${formatJPY(10000 - summary.subtotal)} more for free shipping</p>` : ""}
+            <div class="cart-summary-total">
               <span>${t("cart.total")}</span>
               <strong>${formatJPY(summary.total)}</strong>
             </div>
@@ -1322,19 +1530,35 @@ async function renderCheckout(params = new URLSearchParams()) {
   app.innerHTML = `
     <div class="checkout-layout">
       <div class="checkout-main">
-        <div class="checkout-step-bar">
-          <span class="checkout-step-item">${t("checkout.stepCart")}</span>
-          <span class="checkout-step-arrow">›</span>
-          <span class="checkout-step-item active">${t("checkout.title")}</span>
-          <span class="checkout-step-arrow">›</span>
-          <span class="checkout-step-item">${t("checkout.stepPayment")}</span>
-          <span class="checkout-step-arrow">›</span>
-          <span class="checkout-step-item">${t("checkout.stepDone")}</span>
+        <div class="flow-steps">
+          <div class="flow-step done">
+            <div class="flow-dot">✓</div>
+            <span>${t("checkout.stepCart")}</span>
+          </div>
+          <div class="flow-connector done"></div>
+          <div class="flow-step active">
+            <div class="flow-dot">2</div>
+            <span>${t("checkout.title")}</span>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-step">
+            <div class="flow-dot">3</div>
+            <span>${t("checkout.stepPayment")}</span>
+          </div>
+          <div class="flow-connector"></div>
+          <div class="flow-step">
+            <div class="flow-dot">4</div>
+            <span>${t("checkout.stepDone")}</span>
+          </div>
         </div>
+
         ${cancelled ? `<div class="notice error">${t("checkout.paymentCancelled")}</div>` : ""}
 
-        <div class="panel checkout-section">
-          <h3>${t("checkout.shipping")}</h3>
+        <div class="checkout-card">
+          <div class="checkout-card-head">
+            <span class="checkout-card-icon">📦</span>
+            <h3>${t("checkout.shipping")}</h3>
+          </div>
           ${hasSaved ? `
             <div class="address-cards">
               ${addresses.map((addr, i) => `
@@ -1355,29 +1579,41 @@ async function renderCheckout(params = new URLSearchParams()) {
             </details>` : addressFields}
         </div>
 
-        <div class="panel checkout-section">
-          <h3>${t("checkout.payment")}</h3>
+        <div class="checkout-card">
+          <div class="checkout-card-head">
+            <span class="checkout-card-icon">💳</span>
+            <h3>${t("checkout.payment")}</h3>
+          </div>
           ${paymentFieldset}
-          <div class="notice">${t("checkout.stripeNote")}</div>
+          <div class="notice co-stripe-note">${t("checkout.stripeNote")}</div>
         </div>
 
         <div id="checkout-result" class="muted" style="min-height:20px;"></div>
-        <button class="button checkout-submit-btn" id="checkout-submit-btn">${t("checkout.place")}</button>
+        <button class="button checkout-submit-btn" id="checkout-submit-btn">
+          <span class="co-lock">🔒</span> ${t("checkout.place")}
+        </button>
       </div>
 
       <aside class="checkout-sidebar">
         <div class="cart-summary-card">
-          <h3>${t("checkout.orderSummary")}</h3>
-          <div class="summary-line"><span>${t("checkout.subtotal")}</span><strong>${formatJPY(summary.subtotal)}</strong></div>
-          <div class="summary-line"><span>${t("cart.shipping")}</span><strong>${summary.shipping === 0 ? t("misc.free") : formatJPY(summary.shipping)}</strong></div>
-          <div class="summary-line summary-total"><span>${t("cart.total")}</span><strong>${formatJPY(summary.total)}</strong></div>
-          <div style="display:grid;gap:6px;margin-top:4px;">
-            ${state.cart.map((item) => `
-              <div class="summary-item">
-                <span>${escapeHtml(productName(item.product))} ×${item.quantity}</span>
+          <div class="cart-summary-head"><h3>${t("checkout.orderSummary")}</h3></div>
+          <div class="checkout-summary-items">
+            ${state.cart.map((item) => {
+              const thumb = item.product.images?.[0]?.imageUrl || "";
+              return `
+              <div class="co-summary-item">
+                ${thumb ? `<img class="co-summary-thumb" src="${escapeHtml(thumb)}" alt="" />` : `<div class="co-summary-thumb co-summary-thumb-empty">◉</div>`}
+                <div class="co-summary-item-info">
+                  <span>${escapeHtml(productName(item.product))}</span>
+                  <span class="muted">×${item.quantity}</span>
+                </div>
                 <strong>${formatJPY((item.product.discountPrice || item.product.price) * item.quantity)}</strong>
-              </div>`).join("")}
+              </div>`;
+            }).join("")}
           </div>
+          <div class="summary-line"><span>${t("checkout.subtotal")}</span><span>${formatJPY(summary.subtotal)}</span></div>
+          <div class="summary-line"><span>${t("cart.shipping")}</span><span class="${summary.shipping === 0 ? "cart-free-shipping" : ""}">${summary.shipping === 0 ? t("misc.free") : formatJPY(summary.shipping)}</span></div>
+          <div class="cart-summary-total"><span>${t("cart.total")}</span><strong>${formatJPY(summary.total)}</strong></div>
         </div>
       </aside>
     </div>`;
@@ -1489,17 +1725,33 @@ async function renderOrderConfirmation(params) {
         ? "Your payment is pending. Please follow the Stripe or email instructions to complete it."
         : "Your payment failed or expired. Please try again.";
 
+  const isPaid = paymentStatus === "paid";
+  const isFailed = paymentStatus === "failed" || paymentStatus === "expired";
+
   app.innerHTML = `
-    <section class="panel">
-      <h2>Thank you for your order</h2>
-      <p>Order number: <strong>${escapeHtml(orderNumber)}</strong></p>
-      <p class="muted">${escapeHtml(paymentLabel)}</p>
-      <p class="muted">${escapeHtml(orderStatusMessage)}</p>
-      <div class="hero-actions">
-        <a class="button" href="#/orders">View order history</a>
-        <a class="button-secondary" href="#/shop">Continue shopping</a>
+    <div class="order-confirm-page">
+      <div class="order-confirm-card">
+        <div class="order-confirm-icon ${isFailed ? "order-confirm-icon-fail" : ""}">
+          ${isFailed ? "✕" : "✓"}
+        </div>
+        <h1 class="order-confirm-heading">${isFailed ? "Payment Failed" : "Order Placed!"}</h1>
+        <div class="order-confirm-number">
+          Order <strong>#${escapeHtml(orderNumber)}</strong>
+        </div>
+        <p class="order-confirm-msg">${escapeHtml(paymentLabel)}</p>
+        ${!isFailed ? `<p class="order-confirm-sub">${escapeHtml(orderStatusMessage)}</p>` : ""}
+        ${isPaid ? `
+          <div class="order-confirm-badge">
+            <span>✓</span> Payment confirmed
+          </div>` : ""}
+        <div class="order-confirm-actions">
+          ${isFailed
+            ? `<a class="button" href="#/checkout">Try Again</a>`
+            : `<a class="button" href="#/orders">View My Orders</a>`}
+          <a class="button-secondary" href="#/shop">Continue Shopping</a>
+        </div>
       </div>
-    </section>
+    </div>
   `;
   finishPageLoad();
 }
@@ -1690,6 +1942,17 @@ async function renderLogin(params) {
             <button class="button auth-submit-btn" type="submit">${t("auth.sendReset")}</button>
             <div id="forgot-result" class="muted" style="font-size:0.9rem;"></div>
           </form>
+          <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;" />
+          <p style="margin:0 0 6px;font-weight:600;font-size:0.95rem;">${t("auth.forgotEmail")}</p>
+          <p class="muted" style="margin:0 0 10px;font-size:0.9rem;">${t("auth.forgotEmailDesc")}</p>
+          <form id="forgot-email-form" class="auth-form">
+            <div class="auth-field">
+              <label for="forgot-name">${t("auth.yourName")}</label>
+              <input id="forgot-name" name="name" type="text" placeholder="${t("auth.namePlaceholder")}" required autocomplete="name" />
+            </div>
+            <button class="button auth-submit-btn" type="submit">${t("auth.sendReminder")}</button>
+            <div id="forgot-email-result" class="muted" style="font-size:0.9rem;"></div>
+          </form>
         </div>
       </div>
     </div>`;
@@ -1747,6 +2010,34 @@ async function renderLogin(params) {
       result.textContent = data.message || "Reset link sent if that address is registered.";
     }
   });
+
+  document.querySelector("#forgot-email-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const btn = event.currentTarget.querySelector("button[type=submit]");
+    const result = document.querySelector("#forgot-email-result");
+    btn.disabled = true;
+    btn.textContent = t("auth.signingIn").replace("…", "…");
+    try {
+      const form = new FormData(event.currentTarget);
+      const response = await fetch("/api/auth/forgot-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.get("name") }),
+      });
+      const data = await response.json();
+      if (data.hint) {
+        result.textContent = data.hint;
+      } else {
+        result.textContent = t("auth.forgotEmailSent");
+      }
+    } catch {
+      result.textContent = t("misc.networkError");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t("auth.sendReminder");
+    }
+  });
+
   finishPageLoad();
 }
 
@@ -1809,116 +2100,223 @@ async function renderProfile() {
   const isAdmin = profile.user.role === "admin";
 
   app.innerHTML = `
-    <div class="profile-page">
+    <div class="settings-page">
 
-      <div class="profile-hero">
-        <div class="profile-avatar-wrap">
-          <div class="profile-avatar">${initial}</div>
-        </div>
-        <div class="profile-hero-info">
-          <h1 class="profile-name">${escapeHtml(profile.user.name)}</h1>
-          <p class="profile-email">${escapeHtml(profile.user.email)}</p>
-          <div class="profile-badges">
-            <span class="profile-role-badge${isAdmin ? " profile-role-admin" : ""}">${isAdmin ? "Admin" : "Customer"}</span>
-            <span class="profile-provider-badge">via ${escapeHtml(profile.user.provider || "email")}</span>
+      <!-- ── Sidebar ── -->
+      <aside class="settings-sidebar">
+        <div class="settings-profile-mini">
+          <div class="settings-avatar">${initial}</div>
+          <div class="settings-mini-info">
+            <div class="settings-mini-name">${escapeHtml(profile.user.name)}</div>
+            <div class="settings-mini-email">${escapeHtml(profile.user.email)}</div>
           </div>
         </div>
-        <button id="logout-button" class="profile-logout-btn">Sign out</button>
-      </div>
+        <nav class="settings-nav">
+          <button class="settings-nav-item active" data-tab="profile">
+            <span class="sni-icon">👤</span><span>Profile</span>
+          </button>
+          <button class="settings-nav-item" data-tab="account">
+            <span class="sni-icon">⚙️</span><span>Account Settings</span>
+          </button>
+          <button class="settings-nav-item" data-tab="addresses">
+            <span class="sni-icon">📍</span><span>Addresses</span>
+            ${profile.addresses.length ? `<span class="sni-badge">${profile.addresses.length}</span>` : ""}
+          </button>
+          <button class="settings-nav-item" data-tab="messages">
+            <span class="sni-icon">💬</span><span>Messages</span>
+          </button>
+          <div class="settings-nav-divider"></div>
+          <button class="settings-nav-item settings-nav-logout" id="logout-button">
+            <span class="sni-icon">🚪</span><span>${t("profile.logout")}</span>
+          </button>
+        </nav>
+      </aside>
 
-      <div class="profile-stats-row">
-        <div class="profile-stat">
-          <span class="profile-stat-val">${profile.orderCount ?? 0}</span>
-          <span class="profile-stat-label">Orders</span>
-        </div>
-        <div class="profile-stat">
-          <span class="profile-stat-val">${profile.favoritesCount ?? 0}</span>
-          <span class="profile-stat-label">Favorites</span>
-        </div>
-        <div class="profile-stat">
-          <span class="profile-stat-val">${profile.addresses.length}</span>
-          <span class="profile-stat-label">Addresses</span>
-        </div>
-      </div>
+      <!-- ── Content panels ── -->
+      <div class="settings-content">
 
-      <div class="profile-quick-links">
-        <a href="#/orders" class="profile-quick-link">
-          <span class="pql-icon">📦</span>
-          <span class="pql-label">Order History</span>
-          <span class="pql-arrow">→</span>
-        </a>
-        <a href="#/favorites" class="profile-quick-link">
-          <span class="pql-icon">♥</span>
-          <span class="pql-label">My Favorites</span>
-          <span class="pql-arrow">→</span>
-        </a>
-        <a href="#/shop" class="profile-quick-link">
-          <span class="pql-icon">🛍</span>
-          <span class="pql-label">Browse Shop</span>
-          <span class="pql-arrow">→</span>
-        </a>
-        <a href="#/contact" class="profile-quick-link">
-          <span class="pql-icon">✉</span>
-          <span class="pql-label">Contact Support</span>
-          <span class="pql-arrow">→</span>
-        </a>
-        ${isAdmin ? `<a href="#/admin" class="profile-quick-link profile-quick-link-admin">
-          <span class="pql-icon">⚙</span>
-          <span class="pql-label">Admin Panel</span>
-          <span class="pql-arrow">→</span>
-        </a>` : ""}
-      </div>
-
-      <div class="profile-section">
-        <div class="profile-section-head">
-          <h2>Shipping Addresses</h2>
-          <span class="profile-section-sub">Used at checkout</span>
-        </div>
-        <div class="profile-addresses">
-          ${profile.addresses.length
-            ? profile.addresses.map((a) => `
-                <div class="address-card" data-address-id="${a.id}">
-                  <div class="address-card-icon">📍</div>
-                  <div class="address-card-body">
-                    <strong>${escapeHtml(a.full_name)}</strong>
-                    <span>${escapeHtml(a.postal_code)} ${escapeHtml(a.prefecture)}, ${escapeHtml(a.city)}</span>
-                    <span>${escapeHtml(a.address_line1)}${a.address_line2 ? ", " + escapeHtml(a.address_line2) : ""}</span>
-                    <span class="address-phone">📞 ${escapeHtml(a.phone)}</span>
-                  </div>
-                  <button class="address-delete-btn" data-delete-address="${a.id}" title="Remove address">✕</button>
-                </div>`).join("")
-            : `<div class="profile-empty">No saved addresses yet. They're saved automatically at checkout.</div>`}
-        </div>
-      </div>
-
-      <div class="profile-section">
-        <div class="profile-section-head">
-          <h2>Account Settings</h2>
-          <span class="profile-section-sub">Update your name or password</span>
-        </div>
-        <form id="account-settings-form" class="profile-settings-form">
-          <div class="profile-settings-field">
-            <label for="settings-name">Display name</label>
-            <input id="settings-name" name="name" type="text" value="${escapeHtml(profile.user.name)}" placeholder="Your name" />
+        <!-- Profile panel -->
+        <div class="settings-panel active" data-panel="profile">
+          <div class="settings-panel-head">
+            <h1>My Profile</h1>
+            <p class="muted">Welcome back, ${escapeHtml(profile.user.name)}</p>
           </div>
-          ${profile.user.provider === "local" ? `
-          <div class="profile-settings-field">
-            <label for="settings-current-pw">Current password</label>
-            <input id="settings-current-pw" name="currentPassword" type="password" placeholder="Required to change password" autocomplete="current-password" />
+          <div class="sp-identity-card">
+            <div class="settings-avatar sp-avatar-lg">${initial}</div>
+            <div class="sp-identity-info">
+              <div class="sp-name">${escapeHtml(profile.user.name)}</div>
+              <div class="sp-email">${escapeHtml(profile.user.email)}</div>
+              <div class="profile-badges" style="margin-top:8px;flex-wrap:wrap;">
+                <span class="profile-role-badge${isAdmin ? " profile-role-admin" : ""}">${isAdmin ? t("profile.admin") : t("profile.customer")}</span>
+                <span class="profile-provider-badge">${t("profile.viaProvider", escapeHtml(profile.user.provider || "email"))}</span>
+              </div>
+            </div>
           </div>
-          <div class="profile-settings-field">
-            <label for="settings-new-pw">New password</label>
-            <input id="settings-new-pw" name="newPassword" type="password" placeholder="Leave blank to keep current" autocomplete="new-password" />
-          </div>` : ""}
-          <div id="settings-result" style="min-height:18px;font-size:0.9rem;"></div>
-          <button class="button" type="submit" id="settings-submit-btn">Save changes</button>
-        </form>
+          <div class="profile-stats-row">
+            <div class="profile-stat">
+              <span class="profile-stat-val">${profile.orderCount ?? 0}</span>
+              <span class="profile-stat-label">${t("profile.orders")}</span>
+            </div>
+            <div class="profile-stat">
+              <span class="profile-stat-val">${profile.favoritesCount ?? 0}</span>
+              <span class="profile-stat-label">${t("profile.favorites")}</span>
+            </div>
+            <div class="profile-stat">
+              <span class="profile-stat-val">${profile.addresses.length}</span>
+              <span class="profile-stat-label">${t("profile.addresses")}</span>
+            </div>
+          </div>
+          <div class="profile-quick-links">
+            <a href="#/orders" class="profile-quick-link">
+              <span class="pql-icon">📦</span><span class="pql-label">${t("profile.orderHistory")}</span><span class="pql-arrow">→</span>
+            </a>
+            <a href="#/shop" class="profile-quick-link">
+              <span class="pql-icon">🛍</span><span class="pql-label">${t("profile.browseShop")}</span><span class="pql-arrow">→</span>
+            </a>
+            <a href="#/favorites" class="profile-quick-link">
+              <span class="pql-icon">♥</span><span class="pql-label">Favorites</span><span class="pql-arrow">→</span>
+            </a>
+            <a href="#/contact" class="profile-quick-link">
+              <span class="pql-icon">✉</span><span class="pql-label">${t("profile.contactSupport")}</span><span class="pql-arrow">→</span>
+            </a>
+            ${isAdmin ? `<a href="#/admin" class="profile-quick-link profile-quick-link-admin">
+              <span class="pql-icon">⚙</span><span class="pql-label">${t("profile.adminPanel")}</span><span class="pql-arrow">→</span>
+            </a>` : ""}
+          </div>
+        </div>
+
+        <!-- Account Settings panel -->
+        <div class="settings-panel" data-panel="account">
+          <div class="settings-panel-head">
+            <h1>Account Settings</h1>
+            <p class="muted">${t("profile.accountSettingsSub")}</p>
+          </div>
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <h3>Display Name</h3>
+            </div>
+            <form id="account-settings-form" class="profile-settings-form">
+              <div class="profile-settings-field">
+                <label for="settings-name">${t("profile.displayName")}</label>
+                <input id="settings-name" name="name" type="text" value="${escapeHtml(profile.user.name)}" placeholder="${t("auth.namePlaceholder")}" />
+              </div>
+              ${profile.user.provider === "local" ? `
+              <hr class="profile-settings-divider" />
+              <h4 class="settings-subhead">🔒 Change Password</h4>
+              <div class="profile-settings-group">
+                <div class="profile-settings-field">
+                  <label for="settings-current-pw">${t("profile.currentPassword")}</label>
+                  <input id="settings-current-pw" name="currentPassword" type="password" placeholder="${t("auth.passwordCurrentPlaceholder")}" autocomplete="current-password" />
+                </div>
+                <div class="profile-settings-field">
+                  <label for="settings-new-pw">${t("profile.newPassword")}</label>
+                  <input id="settings-new-pw" name="newPassword" type="password" placeholder="${t("auth.passwordPlaceholder")}" autocomplete="new-password" />
+                </div>
+              </div>
+              <div class="profile-settings-field" style="max-width:calc(50% - 6px);">
+                <label for="settings-confirm-pw">${t("profile.confirmNewPassword")}</label>
+                <input id="settings-confirm-pw" name="confirmNewPassword" type="password" placeholder="${t("auth.repeatPassword")}" autocomplete="new-password" />
+              </div>` : `
+              <div class="notice" style="font-size:0.88rem;">
+                You signed in with ${escapeHtml(profile.user.provider || "OAuth")}. Password changes are managed through your provider.
+              </div>`}
+              <div class="profile-settings-actions">
+                <button class="button" type="submit" id="settings-submit-btn">${t("profile.saveChanges")}</button>
+                <div id="settings-result" style="font-size:0.85rem;"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Addresses panel -->
+        <div class="settings-panel" data-panel="addresses">
+          <div class="settings-panel-head">
+            <h1>Shipping Addresses</h1>
+            <p class="muted">Manage your saved delivery addresses</p>
+          </div>
+          <div class="settings-card">
+            <div class="settings-card-head">
+              <h3>${t("profile.shippingAddresses")}</h3>
+              <button id="toggle-add-address" class="profile-section-btn">+ ${t("profile.addAddress")}</button>
+            </div>
+            <div class="profile-addresses" id="addresses-list">
+              ${profile.addresses.length
+                ? profile.addresses.map((a) => `
+                    <div class="address-card" data-address-id="${a.id}">
+                      <div class="address-card-icon">📍</div>
+                      <div class="address-card-body">
+                        <strong>${escapeHtml(a.full_name)}${a.is_default ? ` <span class="address-default-badge">${t("profile.defaultBadge")}</span>` : ""}</strong>
+                        <span>${escapeHtml(a.postal_code)} ${escapeHtml(a.prefecture)}, ${escapeHtml(a.city)}</span>
+                        <span>${escapeHtml(a.address_line1)}${a.address_line2 ? ", " + escapeHtml(a.address_line2) : ""}</span>
+                        <span class="address-phone">📞 ${escapeHtml(a.phone)}</span>
+                        ${!a.is_default ? `<button class="address-set-default-btn" data-set-default="${a.id}">${t("profile.setDefault")}</button>` : ""}
+                      </div>
+                      <button class="address-delete-btn" data-delete-address="${a.id}" title="Remove address">✕</button>
+                    </div>`).join("")
+                : `<div class="profile-empty" id="addresses-empty">${t("profile.noAddresses")}</div>`}
+            </div>
+            <form id="add-address-form" class="profile-add-address-form" style="display:none;">
+              <div class="add-address-grid">
+                <div class="profile-settings-field">
+                  <label>${t("profile.fullName")}</label>
+                  <input name="fullName" type="text" placeholder="${t("profile.fullName")}" required />
+                </div>
+                <div class="profile-settings-field">
+                  <label>${t("profile.phone")}</label>
+                  <input name="phone" type="tel" placeholder="${t("checkout.phone")}" required />
+                </div>
+                <div class="profile-settings-field">
+                  <label>${t("profile.postalCode")}</label>
+                  <input name="postalCode" type="text" placeholder="${t("checkout.postalCode")}" required />
+                </div>
+                <div class="profile-settings-field">
+                  <label>${t("profile.prefecture")}</label>
+                  <input name="prefecture" type="text" placeholder="${t("checkout.prefecture")}" required />
+                </div>
+                <div class="profile-settings-field">
+                  <label>${t("profile.city")}</label>
+                  <input name="city" type="text" placeholder="${t("checkout.city")}" required />
+                </div>
+                <div class="profile-settings-field">
+                  <label>${t("profile.addressLine1")}</label>
+                  <input name="addressLine1" type="text" placeholder="${t("checkout.streetAddress")}" required />
+                </div>
+                <div class="profile-settings-field" style="grid-column:1/-1;">
+                  <label>${t("profile.addressLine2")} <span style="font-weight:400;color:var(--muted)">${t("profile.optional")}</span></label>
+                  <input name="addressLine2" type="text" placeholder="${t("checkout.addressLine2")}" />
+                </div>
+              </div>
+              <div id="add-address-result" class="error" style="min-height:18px;font-size:0.88rem;"></div>
+              <div class="add-address-actions">
+                <button class="button" type="submit" id="add-address-submit">${t("profile.saveAddress")}</button>
+                <button class="button-secondary" type="button" id="cancel-add-address">${t("profile.cancelAddress")}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Messages panel -->
+        <div class="settings-panel" data-panel="messages">
+          <div class="settings-panel-head">
+            <h1>Support Messages</h1>
+            <p class="muted">Your conversations with our support team</p>
+          </div>
+          <div id="profile-messages-section"></div>
+        </div>
+
       </div>
-
-      <div id="profile-messages-section"></div>
-
     </div>
   `;
+
+  /* Tab switching */
+  document.querySelectorAll(".settings-nav-item[data-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".settings-nav-item").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".settings-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelector(`[data-panel="${btn.dataset.tab}"]`)?.classList.add("active");
+    });
+  });
 
   document.querySelector("#logout-button").addEventListener("click", async () => {
     await api("/api/auth/logout", { method: "POST" });
@@ -1941,6 +2339,114 @@ async function renderProfile() {
     });
   });
 
+  function wireSetDefault(container) {
+    container.querySelectorAll("[data-set-default]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = t("profile.saving");
+        const res = await api(`/api/addresses/${btn.dataset.setDefault}/default`, { method: "PATCH" });
+        if (res.ok) {
+          document.querySelectorAll(".address-default-badge").forEach((b) => b.remove());
+          document.querySelectorAll(".address-set-default-btn").forEach((b) => {
+            b.style.display = "";
+            b.disabled = false;
+            b.textContent = t("profile.setDefault");
+          });
+          const nameEl = btn.closest(".address-card-body").querySelector("strong");
+          nameEl.insertAdjacentHTML("beforeend", ` <span class="address-default-badge">${t("profile.defaultBadge")}</span>`);
+          btn.remove();
+        } else {
+          btn.disabled = false;
+          btn.textContent = t("profile.setDefault");
+          showToast("Could not update default address.");
+        }
+      });
+    });
+  }
+  wireSetDefault(document.querySelector("#addresses-list"));
+
+  const toggleAddAddress = document.querySelector("#toggle-add-address");
+  const addAddressForm = document.querySelector("#add-address-form");
+  const addAddressResult = document.querySelector("#add-address-result");
+  toggleAddAddress?.addEventListener("click", () => {
+    const open = addAddressForm.style.display !== "none";
+    addAddressForm.style.display = open ? "none" : "block";
+    toggleAddAddress.textContent = open ? t("profile.addAddress") : "− " + t("profile.cancelAddress");
+  });
+  document.querySelector("#cancel-add-address")?.addEventListener("click", () => {
+    addAddressForm.style.display = "none";
+    toggleAddAddress.textContent = t("profile.addAddress");
+    addAddressForm.reset();
+    addAddressResult.textContent = "";
+  });
+  addAddressForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitBtn = document.querySelector("#add-address-submit");
+    submitBtn.disabled = true;
+    submitBtn.textContent = t("profile.saving");
+    addAddressResult.textContent = "";
+    const fd = new FormData(addAddressForm);
+    const payload = {
+      fullName: fd.get("fullName")?.trim(),
+      phone: fd.get("phone")?.trim(),
+      postalCode: fd.get("postalCode")?.trim(),
+      prefecture: fd.get("prefecture")?.trim(),
+      city: fd.get("city")?.trim(),
+      addressLine1: fd.get("addressLine1")?.trim(),
+      addressLine2: fd.get("addressLine2")?.trim() || "",
+    };
+    try {
+      const res = await api("/api/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addAddressResult.className = "error";
+        addAddressResult.textContent = data.error || "Could not save address.";
+        submitBtn.disabled = false;
+        submitBtn.textContent = t("profile.saveAddress");
+        return;
+      }
+      const a = data;
+      const card = document.createElement("div");
+      card.className = "address-card";
+      card.dataset.addressId = a.id;
+      card.innerHTML = `
+        <div class="address-card-icon">📍</div>
+        <div class="address-card-body">
+          <strong>${escapeHtml(a.full_name)}</strong>
+          <span>${escapeHtml(a.postal_code)} ${escapeHtml(a.prefecture)}, ${escapeHtml(a.city)}</span>
+          <span>${escapeHtml(a.address_line1)}${a.address_line2 ? ", " + escapeHtml(a.address_line2) : ""}</span>
+          <span class="address-phone">📞 ${escapeHtml(a.phone)}</span>
+          <button class="address-set-default-btn" data-set-default="${a.id}">${t("profile.setDefault")}</button>
+        </div>
+        <button class="address-delete-btn" data-delete-address="${a.id}" title="Remove address">✕</button>
+      `;
+      card.querySelector("[data-delete-address]").addEventListener("click", async (e) => {
+        const btn2 = e.currentTarget;
+        btn2.disabled = true;
+        const r = await api(`/api/addresses/${btn2.dataset.deleteAddress}`, { method: "DELETE" });
+        if (r.ok) { card.remove(); } else { btn2.disabled = false; }
+      });
+      wireSetDefault(card);
+      const empty = document.querySelector("#addresses-empty");
+      if (empty) empty.remove();
+      document.querySelector("#addresses-list").appendChild(card);
+      addAddressForm.reset();
+      addAddressForm.style.display = "none";
+      toggleAddAddress.textContent = t("profile.addAddress");
+      addAddressResult.textContent = "";
+    } catch (err) {
+      addAddressResult.className = "error";
+      addAddressResult.textContent = "Something went wrong.";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save address";
+    }
+  });
+
   const settingsForm = document.querySelector("#account-settings-form");
   const settingsResult = document.querySelector("#settings-result");
   const settingsBtn = document.querySelector("#settings-submit-btn");
@@ -1948,19 +2454,31 @@ async function renderProfile() {
     settingsForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       settingsBtn.disabled = true;
-      settingsBtn.textContent = "Saving…";
+      settingsBtn.textContent = t("profile.saving");
       settingsResult.textContent = "";
       const fd = new FormData(settingsForm);
       const payload = {};
       const newName = fd.get("name")?.trim();
       const currentPassword = fd.get("currentPassword")?.trim();
       const newPassword = fd.get("newPassword")?.trim();
+      const confirmNewPassword = fd.get("confirmNewPassword")?.trim();
       if (newName && newName !== profile.user.name) payload.name = newName;
-      if (newPassword) { payload.currentPassword = currentPassword; payload.newPassword = newPassword; }
-      if (!Object.keys(payload).length) {
-        settingsResult.textContent = "No changes to save.";
+      if (newPassword) {
+        if (newPassword !== confirmNewPassword) {
+          settingsResult.className = "error";
+          settingsResult.textContent = t("auth.passwordMismatch");
+          settingsBtn.disabled = false;
+          settingsBtn.textContent = t("profile.saveChanges");
+          return;
+        }
+        payload.newPassword = newPassword;
+        payload.confirmNewPassword = confirmNewPassword;
+      }
+      if (currentPassword) payload.currentPassword = currentPassword;
+      if (!Object.keys(payload).some((k) => k !== "currentPassword")) {
+        settingsResult.textContent = t("profile.noChanges");
         settingsBtn.disabled = false;
-        settingsBtn.textContent = "Save changes";
+        settingsBtn.textContent = t("profile.saveChanges");
         return;
       }
       try {
@@ -1972,93 +2490,186 @@ async function renderProfile() {
         const data = await res.json();
         if (!res.ok) {
           settingsResult.className = "error";
-          settingsResult.textContent = data.error || "Could not save changes.";
+          settingsResult.textContent = data.error || t("misc.error");
           return;
         }
         state.me = data.user;
         updateHeader();
         settingsResult.className = "success";
-        settingsResult.textContent = "Changes saved.";
-        settingsForm.querySelector("[name='currentPassword']")?.replaceWith((() => { const i = document.createElement("input"); i.id = "settings-current-pw"; i.name = "currentPassword"; i.type = "password"; i.placeholder = "Required to change password"; i.autocomplete = "current-password"; return i; })());
-        settingsForm.querySelector("[name='newPassword']")?.replaceWith((() => { const i = document.createElement("input"); i.id = "settings-new-pw"; i.name = "newPassword"; i.type = "password"; i.placeholder = "Leave blank to keep current"; i.autocomplete = "new-password"; return i; })());
+        settingsResult.textContent = t("profile.changesSaved");
+        settingsForm.querySelector("[name='currentPassword']").value = "";
+        settingsForm.querySelector("[name='newPassword']").value = "";
+        settingsForm.querySelector("[name='confirmNewPassword']").value = "";
       } catch (err) {
         settingsResult.className = "error";
-        settingsResult.textContent = err.message || "Something went wrong.";
+        settingsResult.textContent = err.message || t("misc.error");
       } finally {
         settingsBtn.disabled = false;
-        settingsBtn.textContent = "Save changes";
+        settingsBtn.textContent = t("profile.saveChanges");
       }
     });
   }
 
   const messagesSection = document.querySelector("#profile-messages-section");
-  const msgsRes = await api("/api/messages/my");
-  const myMessages = await msgsRes.json();
 
-  const subjectLabels = { order: "Order inquiry", return: "Return or exchange", product: "Product question", shipping: "Shipping & delivery", other: "Other" };
+  async function loadMessages() {
+    const msgsRes = await api("/api/messages/my");
+    const myMessages = await msgsRes.json();
+    const subjectLabels = { order: "Order inquiry", return: "Return or exchange", product: "Product question", shipping: "Shipping & delivery", other: "Other" };
 
-  messagesSection.innerHTML = `
-    <div class="profile-section">
-      <div class="profile-section-head">
-        <h2>Support Messages</h2>
-        <span class="profile-section-sub"><a href="#/contact" style="color:var(--teal)">New message →</a></span>
+    messagesSection.innerHTML = `
+      <div class="pm-compose-wrap settings-card" id="pm-compose-card">
+        <div class="settings-card-head">
+          <h3>New Message</h3>
+          <button class="button-sm button-secondary" id="pm-toggle-compose">+ Compose</button>
+        </div>
+        <form id="pm-compose-form" style="display:none;" class="pm-compose-form">
+          <select name="subject" class="pm-field-input">
+            <option value="">Select a topic (optional)</option>
+            <option value="order">Order inquiry</option>
+            <option value="return">Return or exchange</option>
+            <option value="product">Product question</option>
+            <option value="shipping">Shipping &amp; delivery</option>
+            <option value="other">Other</option>
+          </select>
+          <textarea name="message" class="pm-field-input pm-textarea" placeholder="Write your message to support…" rows="4" required></textarea>
+          <div class="pm-compose-actions">
+            <button class="button button-sm" type="submit" id="pm-send-btn">Send Message</button>
+            <button class="button-secondary button-sm" type="button" id="pm-cancel-btn">Cancel</button>
+            <span id="pm-compose-result" style="font-size:0.85rem;"></span>
+          </div>
+        </form>
       </div>
-      ${myMessages.length ? myMessages.map((msg) => `
-        <div class="message-row" style="margin-bottom:16px;" data-profile-msg="${msg.id}">
-          <div class="message-row-meta">
-            ${msg.subject ? `<span class="message-subject-badge">${escapeHtml(subjectLabels[msg.subject] || msg.subject)}</span>` : ""}
-            <span class="atab-meta">${new Date(msg.created_at).toLocaleDateString()}</span>
-          </div>
-          <div class="message-thread">
-            <div class="thread-bubble thread-bubble-customer">
-              <div class="thread-bubble-header">
-                <span class="thread-sender">You</span>
-                <span class="thread-time">${new Date(msg.created_at).toLocaleString()}</span>
-              </div>
-              <p>${escapeHtml(msg.message)}</p>
-            </div>
-            ${(msg.replies || []).map((r) => `
-              <div class="thread-bubble ${r.sender === "admin" ? "thread-bubble-admin" : "thread-bubble-customer"}">
-                <div class="thread-bubble-header">
-                  <span class="thread-sender">${r.sender === "admin" ? "Support" : "You"}</span>
-                  <span class="thread-time">${new Date(r.created_at).toLocaleString()}</span>
-                </div>
-                <p>${escapeHtml(r.content)}</p>
-              </div>`).join("")}
-          </div>
-          <div class="message-reply-form">
-            <textarea class="reply-textarea" placeholder="Reply to support…" rows="2" data-profile-reply-for="${msg.id}"></textarea>
-            <div class="message-reply-actions">
-              <button class="button button-sm profile-send-reply" data-msg-id="${msg.id}">Send</button>
-            </div>
-          </div>
-        </div>`).join("")
-      : `<div class="profile-empty">No messages yet. <a href="#/contact" style="color:var(--teal)">Contact support</a> if you need help.</div>`}
-    </div>
-  `;
 
-  messagesSection.querySelectorAll(".profile-send-reply").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const textarea = messagesSection.querySelector(`textarea[data-profile-reply-for="${btn.dataset.msgId}"]`);
-      const content = textarea.value.trim();
-      if (!content) return;
-      btn.disabled = true;
-      btn.textContent = "Sending…";
-      const res = await api(`/api/messages/${btn.dataset.msgId}/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-      if (res.ok) {
-        await renderProfile();
-      } else {
+      <div class="pm-threads">
+        ${myMessages.length ? myMessages.map((msg) => `
+          <div class="settings-card pm-thread" data-profile-msg="${msg.id}">
+            <div class="pm-thread-head">
+              ${msg.subject ? `<span class="message-subject-badge">${escapeHtml(subjectLabels[msg.subject] || msg.subject)}</span>` : "<span></span>"}
+              <span class="pm-thread-date muted">${new Date(msg.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="message-thread">
+              <div class="thread-bubble thread-bubble-customer">
+                <div class="thread-bubble-header">
+                  <span class="thread-sender">You</span>
+                  <span class="thread-time">${new Date(msg.created_at).toLocaleString()}</span>
+                </div>
+                <p>${escapeHtml(msg.message)}</p>
+              </div>
+              ${(msg.replies || []).map((r) => `
+                <div class="thread-bubble ${r.sender === "admin" ? "thread-bubble-admin" : "thread-bubble-customer"}">
+                  <div class="thread-bubble-header">
+                    <span class="thread-sender">${r.sender === "admin" ? "Support" : "You"}</span>
+                    <span class="thread-time">${new Date(r.created_at).toLocaleString()}</span>
+                  </div>
+                  <p>${escapeHtml(r.content)}</p>
+                </div>`).join("")}
+            </div>
+            <div class="message-reply-form">
+              <textarea class="reply-textarea pm-field-input" placeholder="Reply to support…" rows="2" data-profile-reply-for="${msg.id}"></textarea>
+              <div class="message-reply-actions">
+                <button class="button button-sm profile-send-reply" data-msg-id="${msg.id}">Send Reply</button>
+                <span class="pm-reply-result" style="font-size:0.82rem;"></span>
+              </div>
+            </div>
+          </div>`).join("")
+        : `<div class="pm-empty muted">No messages yet. Use the compose button above to contact support.</div>`}
+      </div>
+    `;
+
+    /* Toggle compose form */
+    const toggleBtn = messagesSection.querySelector("#pm-toggle-compose");
+    const composeForm = messagesSection.querySelector("#pm-compose-form");
+    const cancelBtn = messagesSection.querySelector("#pm-cancel-btn");
+    toggleBtn.addEventListener("click", () => {
+      const open = composeForm.style.display === "none";
+      composeForm.style.display = open ? "grid" : "none";
+      toggleBtn.textContent = open ? "✕ Close" : "+ Compose";
+    });
+    cancelBtn.addEventListener("click", () => {
+      composeForm.style.display = "none";
+      toggleBtn.textContent = "+ Compose";
+      composeForm.reset();
+    });
+
+    /* Send new message */
+    composeForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const sendBtn = messagesSection.querySelector("#pm-send-btn");
+      const result = messagesSection.querySelector("#pm-compose-result");
+      const fd = new FormData(composeForm);
+      const msgText = fd.get("message")?.trim();
+      if (!msgText) return;
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Sending…";
+      result.textContent = "";
+      try {
+        const res = await api("/api/contact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: profile.user.name,
+            email: profile.user.email,
+            subject: fd.get("subject") || "",
+            message: msgText,
+          }),
+        });
         const data = await res.json();
-        showToast(data.error || "Could not send reply.");
-        btn.disabled = false;
-        btn.textContent = "Send";
+        if (res.ok) {
+          composeForm.reset();
+          composeForm.style.display = "none";
+          toggleBtn.textContent = "+ Compose";
+          showToast("Message sent! We'll reply within 1–2 business days.");
+          await loadMessages();
+        } else {
+          result.className = "error";
+          result.textContent = data.error || "Could not send message.";
+        }
+      } catch {
+        result.className = "error";
+        result.textContent = "Network error. Try again.";
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Send Message";
       }
     });
-  });
+
+    /* Send reply */
+    messagesSection.querySelectorAll(".profile-send-reply").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const textarea = messagesSection.querySelector(`textarea[data-profile-reply-for="${btn.dataset.msgId}"]`);
+        const resultEl = btn.closest(".message-reply-form").querySelector(".pm-reply-result");
+        const content = textarea.value.trim();
+        if (!content) return;
+        btn.disabled = true;
+        btn.textContent = "Sending…";
+        resultEl.textContent = "";
+        try {
+          const res = await api(`/api/messages/${btn.dataset.msgId}/reply`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+          });
+          if (res.ok) {
+            await loadMessages();
+          } else {
+            const data = await res.json();
+            resultEl.className = "error pm-reply-result";
+            resultEl.textContent = data.error || "Could not send reply.";
+            btn.disabled = false;
+            btn.textContent = "Send Reply";
+          }
+        } catch {
+          resultEl.className = "error pm-reply-result";
+          resultEl.textContent = "Network error. Try again.";
+          btn.disabled = false;
+          btn.textContent = "Send Reply";
+        }
+      });
+    });
+  }
+
+  await loadMessages();
   finishPageLoad();
 }
 
@@ -2086,8 +2697,35 @@ async function renderOrders() {
     finishPageLoad();
     return;
   }
-  const orderStatusColor = { pending:"ostatus-amber", processing:"ostatus-blue", shipped:"ostatus-purple", completed:"ostatus-green", cancelled:"ostatus-red" };
+  const orderStatusColor = { pending:"ostatus-amber", processing:"ostatus-blue", shipped:"ostatus-purple", arrived:"ostatus-orange", completed:"ostatus-green", cancelled:"ostatus-red" };
   const paymentColor = { paid:"ostatus-green", unpaid:"ostatus-red", pending:"ostatus-amber", failed:"ostatus-red", refunded:"ostatus-gray" };
+
+  const TIMELINE_STEPS = ["pending", "processing", "shipped", "arrived", "completed"];
+  const STEP_ICONS = { pending: "📋", processing: "⚙️", shipped: "📦", arrived: "🚚", completed: "✅" };
+
+  function orderTimeline(status) {
+    if (status === "cancelled") {
+      return `<div class="order-flow">
+        <div class="of-step done"><div class="of-dot">📋</div><span>${t("order.timeline.pending")}</span></div>
+        <div class="of-line done"></div>
+        <div class="of-step fail"><div class="of-dot">✕</div><span>${t("order.timeline.cancelled")}</span></div>
+      </div>`;
+    }
+    const idx = TIMELINE_STEPS.indexOf(status);
+    return `<div class="order-flow">
+      ${TIMELINE_STEPS.map((step, i) => {
+        const cls = i < idx ? "done" : i === idx ? "active" : "";
+        const dot = i < idx ? "✓" : STEP_ICONS[step];
+        return `
+          <div class="of-step ${cls}">
+            <div class="of-dot">${dot}</div>
+            <span>${t(`order.timeline.${step}`)}</span>
+          </div>
+          ${i < TIMELINE_STEPS.length - 1 ? `<div class="of-line ${i < idx ? "done" : ""}"></div>` : ""}
+        `;
+      }).join("")}
+    </div>`;
+  }
 
   app.innerHTML = `
     <div class="orders-page">
@@ -2096,26 +2734,39 @@ async function renderOrders() {
           <h1>Order History</h1>
           <p class="muted">${orders.length} order${orders.length !== 1 ? "s" : ""} placed</p>
         </div>
-        <a href="#/shop" class="button-secondary" style="min-height:40px;padding:0 16px;display:inline-flex;align-items:center;">Continue Shopping</a>
+        <a href="#/shop" class="button-secondary orders-shop-btn">Continue Shopping</a>
       </div>
       <div class="orders-list-new">
         ${orders.length
           ? orders.map((order) => `
-              <article class="order-card-new">
-                <div class="ocn-left">
-                  <div class="ocn-number">${escapeHtml(order.order_number)}</div>
-                  <div class="ocn-date muted">${new Date(order.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}</div>
+              <article class="order-card-new ocn-status-${order.status}">
+                <div class="ocn-top">
+                  <div class="ocn-left">
+                    <div class="ocn-number">${escapeHtml(order.order_number)}</div>
+                    <div class="ocn-date muted">${new Date(order.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}</div>
+                  </div>
+                  <div class="ocn-right">
+                    <span class="ocn-total">${formatJPY(order.grand_total)}</span>
+                    <a href="/api/orders/${order.id}/receipt?token=${encodeURIComponent(state.authToken)}" target="_blank" rel="noopener" class="ocn-receipt-btn">Receipt ↗</a>
+                  </div>
                 </div>
-                <div class="ocn-mid">
-                  <span class="ostatus ${orderStatusColor[order.status] || ""}">${escapeHtml(order.status)}</span>
-                  <span class="ostatus ${paymentColor[order.payment_status] || ""}">${escapeHtml(paymentStatusLabel(order.payment_status))}</span>
+                ${orderTimeline(order.status)}
+                ${order.tracking_number ? `
+                  <div class="ocn-track-card">
+                    <span class="otc-icon">${order.status === "arrived" ? "🚚" : "📦"}</span>
+                    <div class="otc-body">
+                      <span class="otc-label">${order.status === "arrived" ? "Out for Delivery" : order.status === "completed" ? "Delivered" : "In Transit"}</span>
+                      <strong class="otc-number">${escapeHtml(order.tracking_number)}</strong>
+                    </div>
+                    <span class="ostatus ${orderStatusColor[order.status] || ""}">${escapeHtml(order.status)}</span>
+                  </div>` : ""}
+                <div class="ocn-bottom">
+                  <div class="ocn-meta">
+                    <span class="ostatus ${paymentColor[order.payment_status] || ""}">${escapeHtml(paymentStatusLabel(order.payment_status))}</span>
+                    <span class="ocn-sep">·</span>
+                    <span class="ocn-method-inline muted">${escapeHtml(paymentMethodLabel(order.payment_method))}</span>
+                  </div>
                 </div>
-                <div class="ocn-method muted">${escapeHtml(paymentMethodLabel(order.payment_method))}</div>
-                <div class="ocn-total-row">
-                  <span class="ocn-total">${formatJPY(order.grand_total)}</span>
-                  <a href="/api/orders/${order.id}/receipt?token=${encodeURIComponent(state.authToken)}" target="_blank" rel="noopener" class="ocn-receipt-btn">Receipt ↗</a>
-                </div>
-                ${order.tracking_number ? `<div class="ocn-tracking">📦 Tracking: <strong>${escapeHtml(order.tracking_number)}</strong></div>` : ""}
                 ${(order.items || []).length ? `
                   <div class="ocn-items">
                     ${order.items.map((item) => `
@@ -2144,15 +2795,22 @@ function renderFavorites() {
     return;
   }
   app.innerHTML = `
-    <section class="section-head">
+    <div class="fav-banner">
+      <span class="fav-banner-icon">♥</span>
       <div>
-        <h2>Favorites</h2>
-        <p>${state.favorites.length} saved item${state.favorites.length !== 1 ? "s" : ""}</p>
+        <h1 class="fav-banner-title">Favorites</h1>
+        <p class="fav-banner-sub">${state.favorites.length} saved item${state.favorites.length !== 1 ? "s" : ""}</p>
       </div>
-    </section>
-    <section class="product-grid">
-      ${state.favorites.length ? state.favorites.map(cardMarkup).join("") : `<div class="empty-state">You do not have any favorites yet.</div>`}
-    </section>
+      ${state.favorites.length ? `<a href="#/shop" class="button" style="margin-left:auto;">Browse more</a>` : ""}
+    </div>
+    ${state.favorites.length
+      ? `<section class="product-grid">${state.favorites.map(cardMarkup).join("")}</section>`
+      : `<div class="fav-empty">
+           <div class="fav-empty-icon">♡</div>
+           <h3>No favorites yet</h3>
+           <p class="muted">Tap the heart on any product to save it here.</p>
+           <a href="#/shop" class="button" style="margin-top:8px;">Browse the shop</a>
+         </div>`}
   `;
   bindCardActions(app);
   finishPageLoad();
@@ -3526,10 +4184,10 @@ function renderCategoriesTab(adminContent, categories, reload) {
 }
 
 function renderOrdersTab(adminContent, orders, reload) {
-  const ORDER_STATUSES = ["pending","processing","shipped","completed","cancelled"];
+  const ORDER_STATUSES = ["pending","processing","shipped","arrived","completed","cancelled"];
   const PAYMENT_STATUSES = ["unpaid","pending","paid","failed","refunded"];
 
-  const orderStatusColor = { pending:"badge-amber", processing:"badge-blue", shipped:"badge-purple", completed:"badge-green", cancelled:"badge-red" };
+  const orderStatusColor = { pending:"badge-amber", processing:"badge-blue", shipped:"badge-purple", arrived:"badge-orange", completed:"badge-green", cancelled:"badge-red" };
   const paymentStatusColor = { unpaid:"badge-red", pending:"badge-amber", paid:"badge-green", failed:"badge-darkred", refunded:"badge-gray" };
 
   adminContent.innerHTML = `
@@ -4073,6 +4731,60 @@ function renderHomeTab(adminContent, settings, reload) {
   }
 }
 
+function renderReviewsTab(container, reviews, reload) {
+  function starsText(r) { return "★".repeat(r) + "☆".repeat(5 - r); }
+
+  container.innerHTML = `
+    <div class="admin-reviews">
+      <div class="admin-section-head" style="margin-bottom:16px;">
+        <h3 style="margin:0;">Reviews</h3>
+        <p class="muted" style="margin:4px 0 0;font-size:0.9rem;">${reviews.length} total · ${reviews.filter((r) => !r.approved).length} pending approval</p>
+      </div>
+      ${reviews.length === 0 ? `<p class="muted">No reviews yet.</p>` : reviews.map((r) => `
+        <div class="admin-review-card ${r.approved ? "" : "review-pending"}" data-id="${r.id}">
+          <div class="arc-head">
+            <div>
+              <span class="arc-stars">${starsText(r.rating)}</span>
+              <span class="arc-author">${escapeHtml(r.author_name)}</span>
+              <span class="muted arc-product">on <a href="#/product/${escapeHtml(r.product_slug)}" style="color:var(--teal);">${escapeHtml(r.product_name)}</a></span>
+            </div>
+            <div class="arc-meta">
+              <span class="ostatus ${r.approved ? "ostatus-green" : "ostatus-amber"}">${r.approved ? t("review.approved") : t("review.pending")}</span>
+              <span class="muted" style="font-size:0.8rem;">${new Date(r.created_at).toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}</span>
+            </div>
+          </div>
+          ${r.body ? `<p class="arc-body">${escapeHtml(r.body)}</p>` : `<p class="arc-body muted">(no comment)</p>`}
+          <div class="arc-actions">
+            ${!r.approved ? `<button class="button arc-approve-btn" data-approve="${r.id}">${t("review.approve")}</button>` : `<button class="button-secondary arc-approve-btn" data-unapprove="${r.id}">Unapprove</button>`}
+            <button class="button-secondary arc-delete-btn" data-delete="${r.id}">${t("review.delete")}</button>
+          </div>
+        </div>`).join("")}
+    </div>`;
+
+  container.querySelectorAll("[data-approve]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await api(`/api/admin/reviews/${btn.dataset.approve}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ approved: true }) });
+      reload();
+    });
+  });
+  container.querySelectorAll("[data-unapprove]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await api(`/api/admin/reviews/${btn.dataset.unapprove}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ approved: false }) });
+      reload();
+    });
+  });
+  container.querySelectorAll("[data-delete]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this review?")) return;
+      btn.disabled = true;
+      await api(`/api/admin/reviews/${btn.dataset.delete}`, { method: "DELETE" });
+      reload();
+    });
+  });
+}
+
 async function renderAdmin(params) {
   updatePageMeta({ title: "Admin" });
   if (!state.me || state.me.role !== "admin") {
@@ -4085,7 +4797,7 @@ async function renderAdmin(params) {
   const urlParams = params instanceof URLSearchParams ? params : new URLSearchParams(params || "");
   let currentTab = urlParams.get("tab") || "dashboard";
 
-  const [dashboard, products, categories, orders, customers, settings, messages] = await Promise.all([
+  const [dashboard, products, categories, orders, customers, settings, messages, reviews] = await Promise.all([
     api("/api/admin/dashboard").then((res) => res.json()),
     api("/api/admin/products").then((res) => res.json()),
     api("/api/admin/categories").then((res) => res.json()),
@@ -4093,12 +4805,14 @@ async function renderAdmin(params) {
     api("/api/admin/customers").then((res) => res.json()),
     api("/api/admin/settings").then((res) => res.json()),
     api("/api/admin/messages").then((res) => res.json()),
+    api("/api/admin/reviews").then((res) => res.json()),
   ]);
 
-  const tabNames = ["dashboard", "products", "categories", "orders", "customers", "messages", "settings", "home"];
+  const tabNames = ["dashboard", "products", "categories", "orders", "customers", "messages", "reviews", "settings", "home"];
 
   const unreadCount = dashboard.unreadMessages || 0;
-  const tabLabels = { dashboard: "Dashboard", products: "Products", categories: "Categories", orders: "Orders", customers: "Customers", messages: unreadCount > 0 ? `Messages (${unreadCount})` : "Messages", settings: "Settings", home: "Home Page" };
+  const pendingReviewCount = Array.isArray(reviews) ? reviews.filter((r) => !r.approved).length : 0;
+  const tabLabels = { dashboard: "Dashboard", products: "Products", categories: "Categories", orders: "Orders", customers: "Customers", messages: unreadCount > 0 ? `Messages (${unreadCount})` : "Messages", reviews: pendingReviewCount > 0 ? `Reviews (${pendingReviewCount})` : "Reviews", settings: "Settings", home: "Home Page" };
 
   app.innerHTML = `
     <section class="panel admin-panel">
@@ -4133,6 +4847,7 @@ async function renderAdmin(params) {
     if (tab === "orders") renderOrdersTab(adminContent, orders, reload);
     if (tab === "customers") renderCustomersTab(adminContent, customers, reload);
     if (tab === "messages") renderMessagesTab(adminContent, messages, reload);
+    if (tab === "reviews") renderReviewsTab(adminContent, reviews, reload);
     if (tab === "settings") renderSettingsTab(adminContent, settings, reload);
     if (tab === "home") renderHomeTab(adminContent, settings, reload);
   }
