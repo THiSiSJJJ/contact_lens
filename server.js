@@ -125,8 +125,8 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   passport.use(
     new FacebookStrategy(
       {
-        appID: process.env.FACEBOOK_APP_ID,
-        appSecret: process.env.FACEBOOK_APP_SECRET,
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
         callbackURL: process.env.FACEBOOK_CALLBACK_URL || `${FRONTEND_BASE_URL}/auth/facebook/callback`,
         profileFields: ["id", "displayName", "emails"],
       },
